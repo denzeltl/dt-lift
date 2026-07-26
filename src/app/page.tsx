@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { useDatabase } from "@/context/DatabaseContext";
 import { Dumbbell, LogOut, CheckCircle2, Cloud, HardDrive, Smartphone } from "lucide-react";
 
+type BeforeInstallPromptEvent = Event & {
+    prompt: () => void;
+    userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+};
+
 export default function Page() {
     const { user, login, signup, logout, loginAsGuest, isLocalOnly, isLoading } = useDatabase();
     const router = useRouter();
@@ -15,7 +20,10 @@ export default function Page() {
     const [fullName, setFullName] = useState("");
     const [authError, setAuthError] = useState("");
     const [authLoading, setAuthLoading] = useState(false);
-    const [installable, setInstallable] = useState(false);
+    const [installable, setInstallable] = useState(
+        typeof window !== "undefined" &&
+            !!(window as unknown as Window & { deferredPrompt?: BeforeInstallPromptEvent }).deferredPrompt,
+    );
 
     // Redirect to dashboard if logged in, but stay on this page if they are looking at the Profile
     useEffect(() => {
@@ -26,10 +34,6 @@ export default function Page() {
 
     useEffect(() => {
         if (typeof window !== "undefined") {
-            if (window.deferredPrompt) {
-                setInstallable(true);
-            }
-
             const handleInstallAvailable = () => {
                 setInstallable(true);
             };
@@ -62,8 +66,10 @@ export default function Page() {
     };
 
     const handleInstallClick = async () => {
-        if (typeof window !== "undefined" && window.deferredPrompt) {
-            const promptEvent = window.deferredPrompt;
+        if (typeof window !== "undefined") {
+            const promptEvent = (window as unknown as Window & { deferredPrompt?: BeforeInstallPromptEvent })
+                .deferredPrompt;
+            if (!promptEvent) return;
             promptEvent.prompt();
             const { outcome } = await promptEvent.userChoice;
             console.log(`User response to install prompt: ${outcome}`);
@@ -76,7 +82,7 @@ export default function Page() {
         return (
             <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-3">
                 <Dumbbell className="h-10 w-10 animate-bounce text-lime-400" />
-                <p className="text-sm font-semibold text-zinc-400 font-mono">Loading Carry Lift...</p>
+                <p className="text-sm font-semibold text-zinc-400">Loading Carry Lift...</p>
             </div>
         );
     }
@@ -109,12 +115,12 @@ export default function Page() {
                                 </div>
                                 <div>
                                     <h4 className="text-sm font-bold text-zinc-200">Guest Mode (Local Storage Only)</h4>
-                                    <p className="text-xs text-zinc-400 leading-relaxed mt-1">
+                                    <p className="text-sm text-zinc-400 leading-relaxed mt-1">
                                         Your workout templates and history are stored locally in your browser cache.
                                     </p>
-                                    <p className="text-[11px] text-amber-400/90 leading-relaxed mt-2 italic font-medium">
-                                        To sync across devices and back up data in the cloud, configure Supabase
-                                        credentials in your env files.
+                                    <p className="text-xs text-amber-400 leading-relaxed mt-2 italic font-medium">
+                                        To sync across devices and back up data in the cloud, log in or sign up for an
+                                        account.
                                     </p>
                                 </div>
                             </>
@@ -125,9 +131,9 @@ export default function Page() {
                                 </div>
                                 <div>
                                     <h4 className="text-sm font-bold text-zinc-200">Cloud Connected</h4>
-                                    <p className="text-xs text-zinc-400 leading-relaxed mt-1">
-                                        Your account is synced securely with the Supabase database. Workouts are saved
-                                        in real-time.
+                                    <p className="text-sm text-zinc-400 leading-relaxed mt-1">
+                                        Your account is synced securely with the database. Workouts are saved in
+                                        real-time.
                                     </p>
                                 </div>
                             </>
@@ -147,20 +153,20 @@ export default function Page() {
                             </div>
                             <div>
                                 <h4 className="font-bold text-zinc-100">Install Carry Lift App</h4>
-                                <p className="text-xs text-lime-300/80">
+                                <p className="text-sm text-lime-300/80">
                                     Add to your Home Screen for a native experience
                                 </p>
                             </div>
                         </div>
-                        <div className="rounded-full bg-zinc-800 p-1 px-3 text-xs font-bold text-lime-400">Install</div>
+                        <div className="rounded-full bg-zinc-800 p-1 px-3 text-sm font-bold text-lime-400">Install</div>
                     </button>
                 )}
 
                 {/* Info & Credits */}
                 <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-6 text-center text-xs text-zinc-500 space-y-1">
-                    <p className="font-semibold text-zinc-400">Carry Lift v0.1.0</p>
+                    <p className="font-semibold text-zinc-400">Carry Lift v1.0.0</p>
                     <p>Created with Next.js, Tailwind v4 and Supabase</p>
-                    <p className="text-[10px] text-zinc-600">All rights reserved &copy; 2026</p>
+                    <p className="text-zinc-600">All rights reserved &copy; 2026</p>
                 </div>
 
                 {/* Log Out Button */}
@@ -180,14 +186,14 @@ export default function Page() {
         <div className="flex min-h-[75vh] flex-col justify-center py-6">
             {/* Brand Header */}
             <div className="flex flex-col items-center justify-center text-center space-y-3 mb-8 animate-fade-in">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-lime-500 to-emerald-500 p-3 shadow-lg shadow-lime-500/20">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-lime-400 p-3 shadow-lg shadow-lime-500/20">
                     <Dumbbell className="h-10 w-10 text-black transform" />
                 </div>
                 <div>
                     <h1 className="text-3xl font-extrabold tracking-tight text-white">
                         CARRY <span className="text-lime-400">LIFT</span>
                     </h1>
-                    <p className="text-xs text-zinc-400 font-medium tracking-wide uppercase mt-1">Gym tracker & PWA</p>
+                    <p className="text-xs text-zinc-400 font-medium tracking-wide uppercase mt-1">Gym tracker</p>
                 </div>
             </div>
 
@@ -234,7 +240,7 @@ export default function Page() {
                             <input
                                 type="text"
                                 required
-                                placeholder="Denzel Washington"
+                                placeholder="Juan Dela Cruz"
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
                                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950/50 px-4 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:border-lime-500/50 focus:outline-none transition-colors"

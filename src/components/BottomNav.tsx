@@ -39,9 +39,7 @@ export default function BottomNav() {
                         </div>
                         <div>
                             <p className="text-xs text-zinc-400 font-medium uppercase tracking-wider">Rest Timer</p>
-                            <p className="text-lg font-bold text-lime-400 font-mono">
-                                {formatDuration(restTimer.timeLeft)}
-                            </p>
+                            <p className="text-lg font-bold text-lime-400">{formatDuration(restTimer.timeLeft)}</p>
                         </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -80,7 +78,7 @@ export default function BottomNav() {
                         </div>
                         <div>
                             <p className="text-sm font-semibold text-zinc-100">{activeWorkout.name}</p>
-                            <p className="text-xs text-zinc-400 font-mono">{formatDuration(workoutDuration)} elapsed</p>
+                            <p className="text-xs text-zinc-400">{formatDuration(workoutDuration)} elapsed</p>
                         </div>
                     </div>
                     <div className="flex items-center space-x-2 rounded-lg bg-lime-500/10 border border-lime-500/20 px-3 py-1.5 text-xs font-semibold text-lime-400">
@@ -92,7 +90,7 @@ export default function BottomNav() {
 
             {/* 3. Primary Bottom Navigation Bar */}
             <nav className="border-t border-zinc-900 bg-zinc-950/95 pb-safe backdrop-blur-md">
-                <div className="mx-auto flex h-16 max-w-md items-center justify-around px-2 text-zinc-500">
+                <div className="mx-auto flex h-16 max-w-lg items-center justify-around px-2 text-zinc-500">
                     <Link
                         href="/dashboard"
                         className={`flex flex-col items-center justify-center w-16 h-full transition-colors ${
@@ -100,7 +98,7 @@ export default function BottomNav() {
                         }`}
                     >
                         <Dumbbell className="h-5.5 w-5.5" />
-                        <span className="mt-1 text-[10px] font-medium">Home</span>
+                        <span className="mt-1 text-xs font-medium">Home</span>
                     </Link>
 
                     <Link
@@ -110,13 +108,13 @@ export default function BottomNav() {
                         }`}
                     >
                         <ClipboardList className="h-5.5 w-5.5" />
-                        <span className="mt-1 text-[10px] font-medium">Templates</span>
+                        <span className="mt-1 text-xs font-medium">Templates</span>
                     </Link>
 
                     {/* Active / Quick Workout tab */}
                     <Link
                         href="/workout"
-                        className={`relative flex flex-col items-center justify-center w-16 h-full transition-colors ${
+                        className={`relative flex flex-col items-center justify-center w-16 h-full transition-colors -mt-2.5 ${
                             pathname === "/workout" ? "text-lime-400" : "hover:text-zinc-300"
                         }`}
                     >
@@ -131,7 +129,7 @@ export default function BottomNav() {
                         >
                             <Play className={`h-5 w-5 ${activeWorkout ? "fill-black" : ""}`} />
                         </div>
-                        <span className="absolute bottom-1.5 text-[10px] font-medium">
+                        <span className="absolute bottom-1.5 text-xs font-medium">
                             {activeWorkout ? "Active" : "Start"}
                         </span>
                     </Link>
@@ -143,7 +141,7 @@ export default function BottomNav() {
                         }`}
                     >
                         <Library className="h-5.5 w-5.5" />
-                        <span className="mt-1 text-[10px] font-medium">Exercises</span>
+                        <span className="mt-1 text-xs font-medium">Exercises</span>
                     </Link>
 
                     <Link
@@ -153,7 +151,7 @@ export default function BottomNav() {
                         }`}
                     >
                         <User className="h-5.5 w-5.5" />
-                        <span className="mt-1 text-[10px] font-medium">Account</span>
+                        <span className="mt-1 text-xs font-medium">Account</span>
                     </Link>
                 </div>
             </nav>
