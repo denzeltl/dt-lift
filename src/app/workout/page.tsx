@@ -360,7 +360,7 @@ export default function Workout() {
                                     <div className="space-y-2 border-b border-zinc-800 pb-3">
                                         <div className="flex items-start justify-between">
                                             <div className="space-y-1">
-                                                <div className="flex items-center space-x-2 flex-wrap">
+                                                <div className="flex items-center space-x-2 space-y-2 flex-wrap">
                                                     <h3 className="font-black text-lime-400">{le.exercise?.name}</h3>
                                                     {/* PR Badge if available */}
                                                     {personalRecords[le.exerciseId] && (
@@ -400,7 +400,7 @@ export default function Workout() {
                                                         }
                                                     }}
                                                     title="View or edit exercise notes"
-                                                    className={`flex items-center space-x-1 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold transition-all active:scale-95 ${
+                                                    className={`items-center space-x-1 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold transition-all active:scale-95 sm:flex hidden ${
                                                         le.exercise?.notes
                                                             ? "bg-lime-500/10 border-lime-500/30 text-lime-400"
                                                             : "bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-lime-400"
@@ -417,7 +417,7 @@ export default function Workout() {
                                                         setShowAddExPicker(true);
                                                     }}
                                                     title="Substitute or swap this exercise"
-                                                    className="flex items-center space-x-1 rounded-lg bg-zinc-900 border border-zinc-800 px-2.5 py-1.5 text-[10px] font-bold text-zinc-300 hover:text-lime-400 hover:border-lime-500/30 active:scale-95 transition-all"
+                                                    className="items-center space-x-1 rounded-lg bg-zinc-900 border border-zinc-800 px-2.5 py-1.5 text-[10px] font-bold text-zinc-300 hover:text-lime-400 hover:border-lime-500/30 active:scale-95 transition-all sm:flex hidden"
                                                 >
                                                     <RefreshCw className="h-3.5 w-3.5 text-lime-400" />
                                                     <span>Substitute</span>
@@ -430,6 +430,42 @@ export default function Workout() {
                                                     <Trash2 className="h-4 w-4" />
                                                 </button>
                                             </div>
+                                        </div>
+
+                                        <div className="items-center justify-end space-x-1.5 shrink-0 sm:hidden flex">
+                                            {/* Notes Button */}
+                                            <button
+                                                onClick={() => {
+                                                    if (openNotesExId === le.exerciseId) {
+                                                        setOpenNotesExId(null);
+                                                    } else {
+                                                        setOpenNotesExId(le.exerciseId);
+                                                        setNoteDraft(le.exercise?.notes || "");
+                                                    }
+                                                }}
+                                                title="View or edit exercise notes"
+                                                className={`items-center space-x-1 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold transition-all active:scale-95 flex ${
+                                                    le.exercise?.notes
+                                                        ? "bg-lime-500/10 border-lime-500/30 text-lime-400"
+                                                        : "bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-lime-400"
+                                                }`}
+                                            >
+                                                <FileText className="h-3.5 w-3.5" />
+                                                <span>Notes{le.exercise?.notes ? " •" : ""}</span>
+                                            </button>
+
+                                            {/* Substitute / Swap Button */}
+                                            <button
+                                                onClick={() => {
+                                                    setSubstitutePickerExIndex(exIdx);
+                                                    setShowAddExPicker(true);
+                                                }}
+                                                title="Substitute or swap this exercise"
+                                                className="items-center space-x-1 rounded-lg bg-zinc-900 border border-zinc-800 px-2.5 py-1.5 text-[10px] font-bold text-zinc-300 hover:text-lime-400 hover:border-lime-500/30 active:scale-95 transition-all flex"
+                                            >
+                                                <RefreshCw className="h-3.5 w-3.5 text-lime-400" />
+                                                <span>Substitute</span>
+                                            </button>
                                         </div>
 
                                         {/* Exercise Notes Box / Editor */}
