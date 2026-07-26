@@ -105,7 +105,7 @@ const triggerVibration = () => {
 }
 
 export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { saveWorkout, exercises, getLastPerformance } = useDatabase()
+  const { saveWorkout, saveTemplate, templates, exercises, getLastPerformance, getLastPerformanceSets } = useDatabase()
   const [activeWorkout, setActiveWorkout] = useState<ActiveWorkout | null>(null)
   const [workoutDuration, setWorkoutDuration] = useState<number>(0)
   const [restTimer, setRestTimer] = useState<RestTimerState>({
@@ -240,9 +240,9 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
             .filter(Boolean) as Exercise[],
           sets: te.sets_json.map((s, idx) => ({
             id: `${te.id}-set-${idx}-${Date.now()}`,
-            // Pre-fill from last performance if available; fall back to template value
-            weight: last ? last.weight.toString() : s.weight.toString(),
-            reps: last ? last.reps.toString() : s.reps.toString(),
+            // Use per-set values from the template (kept in sync after each workout)
+            weight: s.weight.toString(),
+            reps: s.reps.toString(),
             is_warmup: s.is_warmup,
             completed: false
           }))
@@ -258,21 +258,33 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (!activeWorkout) return
     const exercise = exercises.find(e => e.id === exerciseId)
     const last = getLastPerformance(exerciseId)
+    const lastSets = getLastPerformanceSets(exerciseId)
+
+    const initialSets: LogSet[] = (lastSets && lastSets.length > 0)
+      ? lastSets.map((s, idx) => ({
+          id: `set-${Date.now()}-${idx}`,
+          weight: s.weight ? s.weight.toString() : '',
+          reps: s.reps ? s.reps.toString() : '',
+          is_warmup: s.is_warmup,
+          completed: false
+        }))
+      : [
+          {
+            id: `set-${Date.now()}-0`,
+            weight: '',
+            reps: '',
+            is_warmup: false,
+            completed: false
+          }
+        ]
+
     const newEx: LogExercise = {
       exerciseId,
       exercise,
       originalExerciseId: exerciseId,
       originalExercise: exercise,
       lastPerformance: last,
-      sets: [
-        {
-          id: `set-${Date.now()}-0`,
-          weight: last ? last.weight.toString() : '',
-          reps: last ? last.reps.toString() : '',
-          is_warmup: false,
-          completed: false
-        }
-      ]
+      sets: initialSets
     }
     const updated = {
       ...activeWorkout,
@@ -387,8 +399,45 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const originalExerciseId = target.originalExerciseId ?? target.exerciseId
     const originalExercise = target.originalExercise ?? target.exercise
 
-    // Look up last performance for the new exercise
+    // Look up last performance for the target exercise
     const last = getLastPerformance(newExerciseId)
+    const lastSets = getLastPerformanceSets(newExerciseId)
+
+    let updatedSets: LogSet[] = []
+
+    if (lastSets && lastSets.length > 0) {
+      // Use exact per-set history from the last time this exercise was performed
+      updatedSets = lastSets.map((s, idx) => ({
+        id: `set-${Date.now()}-${idx}`,
+        weight: s.weight ? s.weight.toString() : '',
+        reps: s.reps ? s.reps.toString() : '',
+        is_warmup: s.is_warmup,
+        completed: false
+      }))
+    } else if (newExerciseId === originalExerciseId && activeWorkout.templateId) {
+      // Reverting to original template exercise when no history exists
+      const sourceTemplate = templates.find(t => t.id === activeWorkout.templateId)
+      const originalTe = sourceTemplate?.template_exercises?.find(te => te.exercise_id === originalExerciseId)
+      if (originalTe?.sets_json && originalTe.sets_json.length > 0) {
+        updatedSets = originalTe.sets_json.map((s, idx) => ({
+          id: `set-${Date.now()}-${idx}`,
+          weight: s.weight ? s.weight.toString() : '',
+          reps: s.reps ? s.reps.toString() : '',
+          is_warmup: s.is_warmup,
+          completed: false
+        }))
+      }
+    }
+
+    // Fallback if no historical or template sets exist
+    if (updatedSets.length === 0) {
+      updatedSets = target.sets.map(s => ({
+        ...s,
+        weight: '',
+        reps: '',
+        completed: false
+      }))
+    }
 
     updatedExercises[exerciseIndex] = {
       ...target,
@@ -396,7 +445,8 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       exercise: newEx,
       originalExerciseId,
       originalExercise,
-      lastPerformance: last
+      lastPerformance: last,
+      sets: updatedSets
     }
 
     const updated = {
@@ -463,6 +513,65 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         notes,
         finishedSets
       )
+    }
+
+    // Sync the source template with the changes made during this workout
+    if (activeWorkout.templateId) {
+      const sourceTemplate = templates.find(t => t.id === activeWorkout.templateId)
+      if (sourceTemplate) {
+        const updatedExerciseList = activeWorkout.exercises.map(le => {
+          const wasSubstituted =
+            le.originalExerciseId != null && le.exerciseId !== le.originalExerciseId
+
+          // Find the original template exercise entry to preserve its metadata
+          const originalTe = sourceTemplate.template_exercises?.find(
+            te => te.exercise_id === (le.originalExerciseId ?? le.exerciseId)
+          )
+
+          // If this slot was a substitution, restore the original exercise in the template
+          // so it appears unchanged on the next workout. The substitute's data is still
+          // recorded in the workout history (lastPerformance) for future reference.
+          if (wasSubstituted) {
+            return {
+              exercise_id: le.originalExerciseId!,
+              sets: originalTe?.sets_json ?? [],
+              rest_time_seconds: originalTe?.rest_time_seconds ?? le.rest_time_seconds ?? 60,
+              substitute_exercise_ids: originalTe?.substitute_exercise_ids ?? le.substitute_exercise_ids ?? []
+            }
+          }
+
+          // Build an updated sets_json from the actual sets logged this session
+          const updatedSets = le.sets
+            .filter(s => s.completed || (s.weight && s.reps))
+            .map(s => ({
+              weight: parseFloat(s.weight) || 0,
+              reps: parseInt(s.reps, 10) || 0,
+              is_warmup: s.is_warmup
+            }))
+
+          // Fall back to original sets if nothing was logged for this exercise
+          const setsToSave =
+            updatedSets.length > 0 ? updatedSets : (originalTe?.sets_json ?? [])
+
+          return {
+            exercise_id: le.exerciseId,
+            sets: setsToSave,
+            rest_time_seconds: originalTe?.rest_time_seconds ?? le.rest_time_seconds ?? 60,
+            substitute_exercise_ids: originalTe?.substitute_exercise_ids ?? le.substitute_exercise_ids ?? []
+          }
+        })
+
+        try {
+          await saveTemplate(
+            sourceTemplate.name,
+            sourceTemplate.description ?? '',
+            updatedExerciseList,
+            activeWorkout.templateId
+          )
+        } catch (e) {
+          console.error('Failed to sync template after workout', e)
+        }
+      }
     }
 
     setActiveWorkout(null)

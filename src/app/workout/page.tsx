@@ -16,10 +16,13 @@ import {
     MessageSquare,
     Timer,
     RefreshCw,
+    FileText,
+    Trophy,
+    Pencil,
 } from "lucide-react";
 
 export default function Workout() {
-    const { user, templates, exercises, isLoading } = useDatabase();
+    const { user, templates, exercises, personalRecords, updateExerciseNotes, isLoading } = useDatabase();
     const {
         activeWorkout,
         workoutDuration,
@@ -45,6 +48,10 @@ export default function Workout() {
     const [substitutePickerExIndex, setSubstitutePickerExIndex] = useState<number | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("All");
+
+    // Exercise notes state during workout
+    const [openNotesExId, setOpenNotesExId] = useState<string | null>(null);
+    const [noteDraft, setNoteDraft] = useState<string>("");
 
     // Weight unit state for active workout
     const [activeWeightUnit, setActiveWeightUnit] = useState<"kg" | "lbs">("kg");
@@ -352,8 +359,23 @@ export default function Workout() {
                                     {/* Exercise Header */}
                                     <div className="space-y-2 border-b border-zinc-800 pb-3">
                                         <div className="flex items-start justify-between">
-                                            <div>
-                                                <h3 className="font-black text-lime-400">{le.exercise?.name}</h3>
+                                            <div className="space-y-1">
+                                                <div className="flex items-center space-x-2 flex-wrap">
+                                                    <h3 className="font-black text-lime-400">{le.exercise?.name}</h3>
+                                                    {/* PR Badge if available */}
+                                                    {personalRecords[le.exerciseId] && (
+                                                        <span className="inline-flex items-center space-x-1 rounded bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-[10px] font-extrabold text-amber-300">
+                                                            <Trophy className="h-3 w-3 text-amber-400 shrink-0" />
+                                                            <span>
+                                                                PR:{" "}
+                                                                {activeWeightUnit === "lbs"
+                                                                    ? `${kgToLbs(personalRecords[le.exerciseId].weight)} lbs`
+                                                                    : `${personalRecords[le.exerciseId].weight} kg`}{" "}
+                                                                × {personalRecords[le.exerciseId].reps}
+                                                            </span>
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <div className="flex items-center space-x-2 mt-0.5">
                                                     <span className="pr-2 py-0.5 text-xs font-bold text-zinc-400">
                                                         {le.exercise?.category}
@@ -364,34 +386,30 @@ export default function Workout() {
                                                         </span>
                                                     )}
                                                 </div>
-                                                {/* Progressive overload: last session reference */}
-                                                {le.lastPerformance ? (
-                                                    <div className="flex items-center space-x-1.5 mt-1">
-                                                        <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-wider">
-                                                            Last session:
-                                                        </span>
-                                                        <span className="text-xs font-bold text-zinc-300">
-                                                            {activeWeightUnit === "lbs"
-                                                                ? `${kgToLbs(le.lastPerformance.weight)} lbs`
-                                                                : `${le.lastPerformance.weight} kg`}
-                                                            {" × "}
-                                                            {le.lastPerformance.reps} reps
-                                                        </span>
-                                                        <span className="text-xs text-zinc-500">
-                                                            {new Date(le.lastPerformance.date).toLocaleDateString(
-                                                                undefined,
-                                                                { month: "short", day: "numeric" },
-                                                            )}
-                                                        </span>
-                                                    </div>
-                                                ) : (
-                                                    <p className="text-xs text-zinc-500 mt-1 font-medium">
-                                                        No previous data — this is your first time!
-                                                    </p>
-                                                )}
                                             </div>
 
-                                            <div className="flex items-center space-x-1.5">
+                                            <div className="flex items-center space-x-1.5 shrink-0">
+                                                {/* Notes Button */}
+                                                <button
+                                                    onClick={() => {
+                                                        if (openNotesExId === le.exerciseId) {
+                                                            setOpenNotesExId(null);
+                                                        } else {
+                                                            setOpenNotesExId(le.exerciseId);
+                                                            setNoteDraft(le.exercise?.notes || "");
+                                                        }
+                                                    }}
+                                                    title="View or edit exercise notes"
+                                                    className={`flex items-center space-x-1 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold transition-all active:scale-95 ${
+                                                        le.exercise?.notes
+                                                            ? "bg-lime-500/10 border-lime-500/30 text-lime-400"
+                                                            : "bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-lime-400"
+                                                    }`}
+                                                >
+                                                    <FileText className="h-3.5 w-3.5" />
+                                                    <span>Notes{le.exercise?.notes ? " •" : ""}</span>
+                                                </button>
+
                                                 {/* Substitute / Swap Button */}
                                                 <button
                                                     onClick={() => {
@@ -413,6 +431,66 @@ export default function Workout() {
                                                 </button>
                                             </div>
                                         </div>
+
+                                        {/* Exercise Notes Box / Editor */}
+                                        {(openNotesExId === le.exerciseId || le.exercise?.notes) && (
+                                            <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/70 p-3 space-y-2 text-xs">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center space-x-1.5 font-bold text-lime-400">
+                                                        <FileText className="h-3.5 w-3.5" />
+                                                        <span>Exercise Notes</span>
+                                                    </div>
+                                                    {openNotesExId !== le.exerciseId && (
+                                                        <button
+                                                            onClick={() => {
+                                                                setOpenNotesExId(le.exerciseId);
+                                                                setNoteDraft(le.exercise?.notes || "");
+                                                            }}
+                                                            className="text-[10px] font-bold text-zinc-400 hover:text-lime-400 flex items-center space-x-1"
+                                                        >
+                                                            <Pencil className="h-3 w-3" />
+                                                            <span>Edit Note</span>
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {openNotesExId === le.exerciseId ? (
+                                                    <div className="space-y-2">
+                                                        <textarea
+                                                            value={noteDraft}
+                                                            onChange={(e) => setNoteDraft(e.target.value)}
+                                                            placeholder="Add exercise notes (e.g. seat height #4, neutral grip)..."
+                                                            rows={2}
+                                                            className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:border-lime-500/50 focus:outline-none resize-none"
+                                                        />
+                                                        <div className="flex justify-end space-x-2">
+                                                            <button
+                                                                onClick={() => setOpenNotesExId(null)}
+                                                                className="px-2.5 py-1 text-xs font-bold text-zinc-400 rounded-md hover:bg-zinc-900"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                            <button
+                                                                onClick={async () => {
+                                                                    await updateExerciseNotes(
+                                                                        le.exerciseId,
+                                                                        noteDraft.trim(),
+                                                                    );
+                                                                    setOpenNotesExId(null);
+                                                                }}
+                                                                className="px-3 py-1 text-xs font-bold bg-lime-400 text-black rounded-md hover:bg-lime-300"
+                                                            >
+                                                                Save Note
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-zinc-300 whitespace-pre-wrap leading-relaxed">
+                                                        {le.exercise?.notes}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
 
                                         {/* Pre-assigned Substitute Exercise options + Revert to original */}
                                         {(hasSubstitutes || isSubstituted) && (

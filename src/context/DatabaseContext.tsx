@@ -15,6 +15,7 @@ export interface Exercise {
   user_id?: string | null
   name: string
   category: string // 'Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core', 'Cardio'
+  notes?: string
   created_at?: string
 }
 
@@ -22,6 +23,12 @@ export interface SetTemplate {
   weight: number
   reps: number
   is_warmup: boolean
+}
+
+export interface PersonalRecord {
+  weight: number
+  reps: number
+  date: string
 }
 
 export interface TemplateExercise {
@@ -107,6 +114,10 @@ interface DatabaseContextType {
   deleteWorkout: (id: string) => Promise<void>
   lastPerformance: Record<string, LastPerformance>
   getLastPerformance: (exerciseId: string) => LastPerformance | null
+  getLastPerformanceSets: (exerciseId: string) => SetTemplate[] | null
+  personalRecords: Record<string, PersonalRecord>
+  getPersonalRecord: (exerciseId: string) => PersonalRecord | null
+  updateExerciseNotes: (id: string, notes: string) => Promise<void>
 }
 
 const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined)
@@ -148,6 +159,8 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [deletedExerciseIds, setDeletedExerciseIds] = useState<string[]>([])
   const [editedExercises, setEditedExercises] = useState<Record<string, { name: string; category: string }>>({})
 
+  const [exerciseNotes, setExerciseNotes] = useState<Record<string, string>>({})
+
   // Database Data states
   const [dbExercises, setDbExercises] = useState<Exercise[]>([])
   const [dbTemplates, setDbTemplates] = useState<Template[]>([])
@@ -158,14 +171,14 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const exercises = rawExercises
     .filter(ex => !deletedExerciseIds.includes(ex.id))
     .map(ex => {
-      if (editedExercises[ex.id]) {
-        return {
-          ...ex,
-          name: editedExercises[ex.id].name,
-          category: editedExercises[ex.id].category
-        }
+      const edited = editedExercises[ex.id]
+      const note = exerciseNotes[ex.id] ?? ex.notes ?? ''
+      return {
+        ...ex,
+        name: edited ? edited.name : ex.name,
+        category: edited ? edited.category : ex.category,
+        notes: note
       }
-      return ex
     })
   const rawTemplates = isLocalOnly ? localTemplates : dbTemplates
   const templates = rawTemplates.map(t => ({
@@ -203,6 +216,50 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const getLastPerformance = (exerciseId: string): LastPerformance | null =>
     lastPerformance[exerciseId] ?? null
 
+  // Derive Personal Record (PR) per exercise across all workout history
+  // PR is the completed set with maximum weight (and highest reps at that weight)
+  const personalRecords: Record<string, PersonalRecord> = React.useMemo(() => {
+    const result: Record<string, PersonalRecord> = {}
+    for (const w of workouts) {
+      if (!w.workout_sets) continue
+      for (const s of w.workout_sets) {
+        if (s.is_warmup) continue
+        const currentPr = result[s.exercise_id]
+        if (
+          !currentPr ||
+          s.weight > currentPr.weight ||
+          (s.weight === currentPr.weight && s.reps > currentPr.reps)
+        ) {
+          result[s.exercise_id] = {
+            weight: s.weight,
+            reps: s.reps,
+            date: w.start_time
+          }
+        }
+      }
+    }
+    return result
+  }, [workouts])
+
+  const getPersonalRecord = (exerciseId: string): PersonalRecord | null =>
+    personalRecords[exerciseId] ?? null
+
+  const getLastPerformanceSets = (exerciseId: string): SetTemplate[] | null => {
+    for (const w of workouts) {
+      if (!w.workout_sets || w.workout_sets.length === 0) continue
+      const matchingSets = w.workout_sets.filter(s => s.exercise_id === exerciseId)
+      if (matchingSets.length > 0) {
+        const sorted = [...matchingSets].sort((a, b) => a.sequence - b.sequence)
+        return sorted.map(s => ({
+          weight: s.weight,
+          reps: s.reps,
+          is_warmup: s.is_warmup
+        }))
+      }
+    }
+    return null
+  }
+
   // Initialize Auth & Local Data
   useEffect(() => {
     // Load local storage if client-side
@@ -221,6 +278,9 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       const storedEdited = localStorage.getItem('carry_lift_edited_exercises')
       if (storedEdited) setEditedExercises(JSON.parse(storedEdited))
+
+      const storedNotes = localStorage.getItem('carry_lift_exercise_notes')
+      if (storedNotes) setExerciseNotes(JSON.parse(storedNotes))
 
       const storedTemplates = localStorage.getItem('carry_lift_local_templates')
       if (storedTemplates) setLocalTemplates(JSON.parse(storedTemplates))
@@ -442,6 +502,33 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
     setEditedExercises(updatedEdited)
     localStorage.setItem('carry_lift_edited_exercises', JSON.stringify(updatedEdited))
+  }
+
+  const updateExerciseNotes = async (id: string, notes: string): Promise<void> => {
+    if (!isLocalOnly && supabase && user && !id.startsWith('def-')) {
+      const { error } = await supabase
+        .from('exercises')
+        .update({ notes })
+        .eq('id', id)
+      if (!error) {
+        setDbExercises(prev =>
+          prev.map(ex => (ex.id === id ? { ...ex, notes } : ex))
+        )
+      }
+    }
+
+    if (localExercises.some(ex => ex.id === id)) {
+      const updated = localExercises.map(ex => (ex.id === id ? { ...ex, notes } : ex))
+      setLocalExercises(updated)
+      localStorage.setItem('carry_lift_local_exercises', JSON.stringify(updated))
+    }
+
+    const updatedNotes = {
+      ...exerciseNotes,
+      [id]: notes
+    }
+    setExerciseNotes(updatedNotes)
+    localStorage.setItem('carry_lift_exercise_notes', JSON.stringify(updatedNotes))
   }
 
   const deleteExercise = async (id: string): Promise<void> => {
@@ -686,7 +773,11 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       saveWorkout,
       deleteWorkout,
       lastPerformance,
-      getLastPerformance
+      getLastPerformance,
+      getLastPerformanceSets,
+      personalRecords,
+      getPersonalRecord,
+      updateExerciseNotes
     }}>
       {children}
     </DatabaseContext.Provider>

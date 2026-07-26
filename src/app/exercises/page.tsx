@@ -3,14 +3,23 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDatabase, Exercise } from "@/context/DatabaseContext";
-import { Library, Plus, Search, X, Pencil, Trash2, Trophy } from "lucide-react";
+import { Library, Plus, Search, X, Pencil, Trash2, Trophy, FileText, Clock } from "lucide-react";
 
 export default function Exercises() {
-    const { user, exercises, createExercise, updateExercise, deleteExercise, lastPerformance, isLoading } =
-        useDatabase();
+    const {
+        user,
+        exercises,
+        createExercise,
+        updateExercise,
+        deleteExercise,
+        lastPerformance,
+        personalRecords,
+        updateExerciseNotes,
+        isLoading,
+    } = useDatabase();
     const router = useRouter();
 
-    // Weight unit for displaying last performance
+    // Weight unit for displaying performance & PR
     const [perfUnit, setPerfUnit] = useState<"kg" | "lbs">("kg");
     const kgToLbs = (kg: number) => Math.round(kg * 2.20462 * 10) / 10;
 
@@ -22,11 +31,13 @@ export default function Exercises() {
     const [isCreating, setIsCreating] = useState(false);
     const [customName, setCustomName] = useState("");
     const [customCategory, setCustomCategory] = useState("Chest");
+    const [customNotes, setCustomNotes] = useState("");
 
     // Edit exercise state
     const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
     const [editName, setEditName] = useState("");
     const [editCategory, setEditCategory] = useState("Chest");
+    const [editNotes, setEditNotes] = useState("");
 
     // Delete exercise state
     const [deletingExercise, setDeletingExercise] = useState<Exercise | null>(null);
@@ -67,9 +78,13 @@ export default function Exercises() {
         }
 
         try {
-            await createExercise(customName.trim(), customCategory);
+            const newEx = await createExercise(customName.trim(), customCategory);
+            if (customNotes.trim()) {
+                await updateExerciseNotes(newEx.id, customNotes.trim());
+            }
             setCustomName("");
             setCustomCategory("Chest");
+            setCustomNotes("");
             setIsCreating(false);
         } catch (err) {
             console.error("Failed to create exercise", err);
@@ -81,6 +96,7 @@ export default function Exercises() {
         setEditingExercise(ex);
         setEditName(ex.name);
         setEditCategory(ex.category);
+        setEditNotes(ex.notes || "");
     };
 
     // Handle Save Edit
@@ -93,6 +109,7 @@ export default function Exercises() {
 
         try {
             await updateExercise(editingExercise.id, editName.trim(), editCategory);
+            await updateExerciseNotes(editingExercise.id, editNotes.trim());
             setEditingExercise(null);
         } catch (err) {
             console.error("Failed to update exercise", err);
@@ -204,63 +221,99 @@ export default function Exercises() {
                         {filteredExercises.map((ex) => {
                             const isCustom = ex.id && !ex.id.startsWith("def-");
                             const perf = lastPerformance[ex.id];
+                            const pr = personalRecords[ex.id];
 
                             return (
                                 <div
                                     key={ex.id}
-                                    className="flex items-center justify-between rounded-xl border border-zinc-900 bg-zinc-900/20 p-4 hover:border-zinc-800 transition-colors"
+                                    className="flex flex-col space-y-2.5 rounded-xl border border-zinc-900 bg-zinc-900/20 p-4 hover:border-zinc-800 transition-colors"
                                 >
-                                    <div className="space-y-1 flex-1 min-w-0 pr-3">
-                                        <h4 className="text-sm font-extrabold text-zinc-200">{ex.name}</h4>
-                                        <div className="flex items-center flex-wrap gap-1.5">
-                                            <span className="rounded bg-zinc-850 py-0.5 text-xs font-bold text-zinc-400">
-                                                {ex.category}
-                                            </span>
-                                            {isCustom && (
-                                                <span className="rounded bg-lime-500/15 border border-lime-500/20 px-2 py-0.5 text-xs font-bold text-lime-400">
-                                                    Custom
+                                    <div className="flex items-start justify-between">
+                                        <div className="space-y-1 min-w-0 pr-2">
+                                            <h4 className="text-sm font-extrabold text-zinc-200">{ex.name}</h4>
+                                            <div className="flex items-center flex-wrap gap-1.5">
+                                                <span className="rounded bg-zinc-850 py-0.5 text-xs font-bold text-zinc-400">
+                                                    {ex.category}
                                                 </span>
-                                            )}
+                                                {isCustom && (
+                                                    <span className="rounded bg-lime-500/15 border border-lime-500/20 px-2 py-0.5 text-xs font-bold text-lime-400">
+                                                        Custom
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
-                                        {/* Last session performance */}
-                                        {perf ? (
-                                            <div className="flex items-center space-x-1.5 pt-0.5">
-                                                <Trophy className="h-3 w-3 text-lime-400" />
-                                                <span className="text-xs font-bold text-zinc-300">
+
+                                        <div className="flex items-center space-x-1.5 shrink-0">
+                                            <button
+                                                onClick={() => handleStartEdit(ex)}
+                                                title="Edit exercise & notes"
+                                                className="rounded-lg bg-zinc-900 border border-zinc-800 p-2 text-zinc-400 hover:text-lime-400 hover:border-lime-500/30 active:scale-95 transition-all"
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => setDeletingExercise(ex)}
+                                                title="Remove exercise"
+                                                className="rounded-lg bg-zinc-900 border border-zinc-800 p-2 text-zinc-400 hover:text-red-400 hover:border-red-500/30 active:scale-95 transition-all"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Stats Row: PR & Last Session */}
+                                    <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs">
+                                        {/* PR Badge */}
+                                        {pr ? (
+                                            <div className="flex items-center space-x-1.5 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-lg">
+                                                <Trophy className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                                                <span className="font-semibold text-amber-300">
+                                                    PR:{" "}
                                                     {perfUnit === "lbs"
-                                                        ? `${kgToLbs(perf.weight)} lbs`
-                                                        : `${perf.weight} kg`}
-                                                    {" × "}
-                                                    {perf.reps} reps
+                                                        ? `${kgToLbs(pr.weight)} lbs`
+                                                        : `${pr.weight} kg`}{" "}
+                                                    × {pr.reps} reps
                                                 </span>
-                                                <span className="text-xs text-zinc-500">
-                                                    {new Date(perf.date).toLocaleDateString(undefined, {
+                                                <span className="text-[10px] text-amber-400/60 font-medium">
+                                                    (
+                                                    {new Date(pr.date).toLocaleDateString(undefined, {
                                                         month: "short",
                                                         day: "numeric",
                                                     })}
+                                                    )
                                                 </span>
                                             </div>
                                         ) : (
-                                            <p className="text-xs text-zinc-500 pt-0.5">No sessions logged yet</p>
+                                            <div className="flex items-center space-x-1.5 text-zinc-500 bg-zinc-900/50 border border-zinc-850 px-2.5 py-1 rounded-lg">
+                                                <Trophy className="h-3.5 w-3.5 text-zinc-600 shrink-0" />
+                                                <span className="font-medium">No PR set yet</span>
+                                            </div>
+                                        )}
+
+                                        {/* Last Session */}
+                                        {perf && (
+                                            <div className="flex items-center space-x-1.5 text-zinc-400 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-lg">
+                                                <Clock className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                                                <span>
+                                                    Last:{" "}
+                                                    {perfUnit === "lbs"
+                                                        ? `${kgToLbs(perf.weight)} lbs`
+                                                        : `${perf.weight} kg`}{" "}
+                                                    × {perf.reps} reps
+                                                </span>
+                                            </div>
                                         )}
                                     </div>
 
-                                    <div className="flex items-center space-x-1.5">
-                                        <button
-                                            onClick={() => handleStartEdit(ex)}
-                                            title="Edit exercise"
-                                            className="rounded-lg bg-zinc-900 border border-zinc-800 p-2 text-zinc-400 hover:text-lime-400 hover:border-lime-500/30 active:scale-95 transition-all"
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => setDeletingExercise(ex)}
-                                            title="Remove exercise"
-                                            className="rounded-lg bg-zinc-900 border border-zinc-800 p-2 text-zinc-400 hover:text-red-400 hover:border-red-500/30 active:scale-95 transition-all"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
-                                    </div>
+                                    {/* Exercise Notes */}
+                                    {ex.notes && (
+                                        <div className="flex items-start space-x-2 bg-zinc-950/70 border border-zinc-800/60 rounded-lg p-2.5">
+                                            <FileText className="h-3.5 w-3.5 text-lime-400 shrink-0 mt-0.5" />
+                                            <p className="text-xs text-zinc-300 whitespace-pre-wrap leading-relaxed">
+                                                {ex.notes}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
@@ -270,7 +323,7 @@ export default function Exercises() {
 
             {/* CREATE CUSTOM EXERCISE OVERLAY */}
             {isCreating && (
-                <div className="fixed inset-0 z-50 flex flex-col bg-zinc-950 p-4 animate-slide-up">
+                <div className="fixed inset-0 z-50 flex flex-col bg-zinc-950 p-4 animate-slide-up overflow-y-auto">
                     {/* Header */}
                     <div className="flex items-center justify-between pb-4 border-b border-zinc-900">
                         <h2 className="text-lg font-black text-zinc-100 flex items-center space-x-2">
@@ -324,6 +377,19 @@ export default function Exercises() {
                             </div>
                         </div>
 
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                                Exercise Notes (Optional)
+                            </label>
+                            <textarea
+                                placeholder="e.g. Seat position #4, keep elbows at 45 degrees, pause at bottom."
+                                value={customNotes}
+                                onChange={(e) => setCustomNotes(e.target.value)}
+                                rows={3}
+                                className="w-full rounded-xl border border-zinc-800 bg-zinc-900/30 px-4 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:border-lime-500/50 focus:outline-none resize-none transition-colors"
+                            />
+                        </div>
+
                         {/* Footer Buttons */}
                         <div className="pt-6 border-t border-zinc-900 flex space-x-3 mt-6">
                             <button
@@ -346,7 +412,7 @@ export default function Exercises() {
 
             {/* EDIT EXERCISE OVERLAY */}
             {editingExercise && (
-                <div className="fixed inset-0 z-50 flex flex-col bg-zinc-950 p-4 animate-slide-up">
+                <div className="fixed inset-0 z-50 flex flex-col bg-zinc-950 p-4 animate-slide-up overflow-y-auto">
                     {/* Header */}
                     <div className="flex items-center justify-between pb-4 border-b border-zinc-900">
                         <h2 className="text-lg font-black text-zinc-100 flex items-center space-x-2">
@@ -398,6 +464,19 @@ export default function Exercises() {
                                     </button>
                                 ))}
                             </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                                Exercise Notes
+                            </label>
+                            <textarea
+                                placeholder="e.g. Seat position #4, keep elbows at 45 degrees, pause at bottom."
+                                value={editNotes}
+                                onChange={(e) => setEditNotes(e.target.value)}
+                                rows={3}
+                                className="w-full rounded-xl border border-zinc-800 bg-zinc-900/30 px-4 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:border-lime-500/50 focus:outline-none resize-none transition-colors"
+                            />
                         </div>
 
                         {/* Footer Buttons */}
