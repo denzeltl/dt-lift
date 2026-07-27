@@ -73,7 +73,8 @@ export default function Page() {
             promptEvent.prompt();
             const { outcome } = await promptEvent.userChoice;
             console.log(`User response to install prompt: ${outcome}`);
-            window.deferredPrompt = null;
+            // Clear stored prompt (use undefined to satisfy typings)
+            window.deferredPrompt = undefined;
             setInstallable(false);
         }
     };

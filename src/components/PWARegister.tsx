@@ -71,6 +71,6 @@ export default function PWARegister() {
 // Declare type for window global
 declare global {
     interface Window {
-        deferredPrompt?: any;
+        deferredPrompt?: Event;
     }
 }
