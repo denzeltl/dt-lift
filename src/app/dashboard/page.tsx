@@ -1,14 +1,76 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDatabase, Workout } from "@/context/DatabaseContext";
-import { Calendar, Trash2, Clock, Flame, Dumbbell, Award, ChevronDown, ChevronUp, BarChart2 } from "lucide-react";
+import { Calendar, Trash2, Clock, Flame, Dumbbell, Award, ChevronDown, ChevronUp, BarChart2, Minus, Plus, Target, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function Dashboard() {
     const { user, workouts, deleteWorkout, isLoading } = useDatabase();
     const router = useRouter();
     const [expandedWorkouts, setExpandedWorkouts] = useState<Record<string, boolean>>({});
+    const [weeklyGoal, setWeeklyGoal] = useState(3);
+
+    // Load persisted weekly goal from localStorage
+    useEffect(() => {
+        const stored = localStorage.getItem("dt_lift_weekly_goal");
+        if (stored) {
+            const parsed = parseInt(stored, 10);
+            if (!isNaN(parsed) && parsed >= 1 && parsed <= 7) setWeeklyGoal(parsed);
+        }
+    }, []);
+
+    const updateWeeklyGoal = (delta: number) => {
+        setWeeklyGoal((prev) => {
+            const next = Math.max(1, Math.min(7, prev + delta));
+            localStorage.setItem("dt_lift_weekly_goal", String(next));
+            return next;
+        });
+    };
+    const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
+    const [calendarMonth, setCalendarMonth] = useState(() => new Date());
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+    // Helpers for mapping dates to workouts
+    const hasWorkoutOnDate = (date: Date): boolean => {
+        const dateStr = date.toDateString();
+        return workouts.some((w) => new Date(w.start_time).toDateString() === dateStr);
+    };
+
+    const getWorkoutsOnDate = (date: Date): Workout[] => {
+        const dateStr = date.toDateString();
+        return workouts.filter((w) => new Date(w.start_time).toDateString() === dateStr);
+    };
+
+    const getDaysOfCurrentWeek = (): Date[] => {
+        const today = new Date();
+        const startOfWeek = getWeekStart(today);
+        const days: Date[] = [];
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(startOfWeek);
+            d.setDate(d.getDate() + i);
+            days.push(d);
+        }
+        return days;
+    };
+
+    const getDaysOfCalendarMonth = (date: Date): Date[] => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const startOfGrid = new Date(firstDay);
+        const dayOfWeek = startOfGrid.getDay(); // 0=Sun, 1=Mon...
+        const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // shift Monday = 0
+        startOfGrid.setDate(startOfGrid.getDate() - diff);
+
+        const gridDays: Date[] = [];
+        const temp = new Date(startOfGrid);
+        for (let i = 0; i < 42; i++) {
+            gridDays.push(new Date(temp));
+            temp.setDate(temp.getDate() + 1);
+        }
+        return gridDays;
+    };
 
     // Redirect to login if user not authenticated
     React.useEffect(() => {
@@ -48,51 +110,105 @@ export default function Dashboard() {
               )
             : 0;
 
-    const calculateStreak = (workoutsList: Workout[]): number => {
-        if (workoutsList.length === 0) return 0;
-        const dates = workoutsList.map((w) => new Date(w.start_time).toDateString());
-        const uniqueDates = Array.from(new Set(dates)).map((d) => new Date(d));
+    // Helper: get the Monday (start) of a week for a given date
+    const getWeekStart = (date: Date): Date => {
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        const day = d.getDay(); // 0=Sun, 1=Mon, ...
+        const diff = day === 0 ? 6 : day - 1; // shift so Monday = 0
+        d.setDate(d.getDate() - diff);
+        return d;
+    };
 
-        uniqueDates.sort((a, b) => b.getTime() - a.getTime());
+    // Count workouts in the current (ISO) week
+    const getThisWeekCount = (workoutsList: Workout[]): number => {
+        const weekStart = getWeekStart(new Date());
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 7);
+
+        const uniqueDays = new Set<string>();
+        workoutsList.forEach((w) => {
+            const d = new Date(w.start_time);
+            if (d >= weekStart && d < weekEnd) {
+                uniqueDays.add(d.toDateString());
+            }
+        });
+        return uniqueDays.size;
+    };
+
+    // Calculate consecutive-week streak where goal was met
+    const calculateWeekStreak = (workoutsList: Workout[], goal: number): number => {
+        if (workoutsList.length === 0) return 0;
+
+        // Bucket workouts into weeks (by week-start date key)
+        const weekBuckets = new Map<string, Set<string>>();
+        workoutsList.forEach((w) => {
+            const d = new Date(w.start_time);
+            const ws = getWeekStart(d);
+            const key = ws.toISOString();
+            if (!weekBuckets.has(key)) weekBuckets.set(key, new Set());
+            weekBuckets.get(key)!.add(d.toDateString());
+        });
+
+        // Sort week keys newest-first
+        const sortedWeeks = Array.from(weekBuckets.keys()).sort(
+            (a, b) => new Date(b).getTime() - new Date(a).getTime(),
+        );
+
+        const now = new Date();
+        const currentWeekKey = getWeekStart(now).toISOString();
+        const lastWeekDate = new Date(getWeekStart(now));
+        lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+        const lastWeekKey = lastWeekDate.toISOString();
 
         let streak = 0;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        let startIdx = 0;
 
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
+        // The newest week must be either the current or last week
+        if (sortedWeeks.length === 0) return 0;
+        const newestKey = sortedWeeks[0];
 
-        const firstDate = uniqueDates[0];
-        const checkDate = new Date(firstDate);
-        checkDate.setHours(0, 0, 0, 0);
-
-        if (checkDate.getTime() !== today.getTime() && checkDate.getTime() !== yesterday.getTime()) {
+        if (newestKey === currentWeekKey) {
+            // Current week is in progress — count it toward streak only if goal already met
+            const currentCount = weekBuckets.get(currentWeekKey)?.size || 0;
+            if (currentCount >= goal) {
+                streak = 1;
+                startIdx = 1;
+            } else {
+                // Skip current week (still in progress), start checking from last week
+                startIdx = sortedWeeks[1] === lastWeekKey ? 1 : -1;
+                if (startIdx === -1) return 0;
+            }
+        } else if (newestKey === lastWeekKey) {
+            startIdx = 0;
+        } else {
+            // Most recent workout week is older than last week — streak is 0
             return 0;
         }
 
-        let currentCheck = checkDate;
-        streak = 1;
+        // Walk backwards through consecutive weeks
+        let expectedWeek = new Date(sortedWeeks[startIdx]);
+        for (let i = startIdx; i < sortedWeeks.length; i++) {
+            const weekKey = sortedWeeks[i];
+            const weekDate = new Date(weekKey);
 
-        for (let i = 1; i < uniqueDates.length; i++) {
-            const nextDate = new Date(uniqueDates[i]);
-            nextDate.setHours(0, 0, 0, 0);
+            if (weekDate.getTime() !== expectedWeek.getTime()) break;
 
-            const expectedPrevDate = new Date(currentCheck);
-            expectedPrevDate.setDate(expectedPrevDate.getDate() - 1);
-
-            if (nextDate.getTime() === expectedPrevDate.getTime()) {
+            const dayCount = weekBuckets.get(weekKey)?.size || 0;
+            if (dayCount >= goal) {
                 streak++;
-                currentCheck = nextDate;
-            } else if (nextDate.getTime() === currentCheck.getTime()) {
-                continue;
+                expectedWeek = new Date(expectedWeek);
+                expectedWeek.setDate(expectedWeek.getDate() - 7);
             } else {
                 break;
             }
         }
+
         return streak;
     };
 
-    const streak = calculateStreak(workouts);
+    const weekStreak = calculateWeekStreak(workouts, weeklyGoal);
+    const thisWeekCount = getThisWeekCount(workouts);
 
     // Expand / collapse helper
     const toggleExpanded = (id: string) => {
@@ -266,7 +382,7 @@ export default function Dashboard() {
             <div>
                 <h1 className="text-2xl font-black text-zinc-100 flex items-center space-x-2">
                     <Dumbbell className="h-6 w-6 text-lime-400" />
-                    <span>CARRY LIFT</span>
+                    <span>DT LIFT</span>
                 </h1>
                 <p className="text-sm text-zinc-400 font-medium">Welcome back, your fitness metrics at a glance.</p>
             </div>
@@ -288,9 +404,9 @@ export default function Dashboard() {
                         <Flame className="h-5 w-5" />
                     </div>
                     <div>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Day Streak</p>
+                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Week Streak</p>
                         <p className="text-lg font-black text-zinc-100">
-                            {streak} {streak === 1 ? "day" : "days"}
+                            {weekStreak} {weekStreak === 1 ? "wk" : "wks"}
                         </p>
                     </div>
                 </div>
@@ -314,6 +430,229 @@ export default function Dashboard() {
                         <p className="text-lg font-black text-zinc-100">{avgDurationMins} min</p>
                     </div>
                 </div>
+            </div>
+
+            {/* Weekly Calendar & Goal Card */}
+            <div className={`rounded-xl border p-4 space-y-4 transition-all duration-300 ${
+                thisWeekCount >= weeklyGoal
+                    ? "border-lime-500/40 bg-lime-500/5"
+                    : "border-zinc-800 bg-zinc-900/30"
+            }`}>
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                        <Calendar className={`h-4.5 w-4.5 ${thisWeekCount >= weeklyGoal ? "text-lime-400" : "text-zinc-400"}`} />
+                        <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">
+                            Workout Calendar
+                        </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <button
+                            onClick={() => updateWeeklyGoal(-1)}
+                            className="rounded-md p-1 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 active:scale-90 transition-all disabled:opacity-30"
+                            disabled={weeklyGoal <= 1}
+                        >
+                            <Minus className="h-3.5 w-3.5" />
+                        </button>
+                        <span className="text-xs font-bold text-zinc-400 tabular-nums w-14 text-center">
+                            Goal: {weeklyGoal}x
+                        </span>
+                        <button
+                            onClick={() => updateWeeklyGoal(1)}
+                            className="rounded-md p-1 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 active:scale-90 transition-all disabled:opacity-30"
+                            disabled={weeklyGoal >= 7}
+                        >
+                            <Plus className="h-3.5 w-3.5" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Week Calendar Row (Monday - Sunday) */}
+                <div className="flex items-center justify-between bg-zinc-950/40 rounded-xl p-3 border border-zinc-800/40">
+                    {getDaysOfCurrentWeek().map((day) => {
+                        const isWorkoutDay = hasWorkoutOnDate(day);
+                        const isToday = day.toDateString() === new Date().toDateString();
+                        const isSelected = selectedDate && day.toDateString() === selectedDate.toDateString();
+                        
+                        return (
+                            <button
+                                key={day.toISOString()}
+                                onClick={() => {
+                                    if (isSelected) {
+                                        setSelectedDate(null);
+                                    } else {
+                                        setSelectedDate(day);
+                                    }
+                                }}
+                                className="flex flex-col items-center flex-1 py-1 rounded-lg hover:bg-zinc-800/30 transition-colors focus:outline-none"
+                            >
+                                <span className={`text-[9px] font-extrabold uppercase ${
+                                    isToday ? "text-lime-400 font-black" : "text-zinc-500"
+                                }`}>
+                                    {day.toLocaleDateString("en-US", { weekday: "short" }).substring(0, 3)}
+                                </span>
+                                <div className={`mt-1.5 flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold transition-all ${
+                                    isWorkoutDay
+                                        ? "bg-lime-400 text-zinc-950 shadow-[0_0_10px_rgba(163,230,53,0.3)] font-black"
+                                        : isToday
+                                            ? "border border-lime-400 text-lime-400 font-extrabold"
+                                            : isSelected
+                                                ? "border border-zinc-500 text-zinc-300"
+                                                : "text-zinc-400 bg-zinc-900/40"
+                                }`}>
+                                    {isWorkoutDay ? (
+                                        <Dumbbell className="h-3.5 w-3.5" />
+                                    ) : (
+                                        day.getDate()
+                                    )}
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Progress summary & Expand button */}
+                <div className="flex items-center justify-between text-xs">
+                    <p className="font-bold text-zinc-400">
+                        This week: <span className={thisWeekCount >= weeklyGoal ? "text-lime-400 font-extrabold" : "text-zinc-200"}>{thisWeekCount}</span>
+                        <span className="text-zinc-500"> / {weeklyGoal} workouts</span>
+                    </p>
+                    <button
+                        onClick={() => setIsCalendarExpanded(!isCalendarExpanded)}
+                        className="flex items-center space-x-1 font-bold text-lime-400 hover:text-lime-300 transition-colors bg-lime-400/5 px-2.5 py-1 rounded-md border border-lime-500/10 active:scale-95"
+                    >
+                        <span>{isCalendarExpanded ? "Hide Month" : "Show Month"}</span>
+                        {isCalendarExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                    </button>
+                </div>
+
+                {/* Expanded Month View */}
+                {isCalendarExpanded && (
+                    <div className="border-t border-zinc-800/80 pt-4 space-y-3 animate-slide-up">
+                        {/* Month Header Navigation */}
+                        <div className="flex items-center justify-between">
+                            <button
+                                onClick={() => {
+                                    const prev = new Date(calendarMonth);
+                                    prev.setMonth(prev.getMonth() - 1);
+                                    setCalendarMonth(prev);
+                                }}
+                                className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </button>
+                            <span className="text-xs font-black uppercase tracking-wider text-zinc-200">
+                                {calendarMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                            </span>
+                            <button
+                                onClick={() => {
+                                    const next = new Date(calendarMonth);
+                                    next.setMonth(next.getMonth() + 1);
+                                    setCalendarMonth(next);
+                                }}
+                                className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </button>
+                        </div>
+
+                        {/* Month Grid */}
+                        <div className="grid grid-cols-7 gap-1 text-center">
+                            {/* Grid Headers */}
+                            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((h) => (
+                                <span key={h} className="text-[9px] font-extrabold text-zinc-500 uppercase py-1">
+                                    {h.substring(0, 1)}
+                                </span>
+                            ))}
+                            
+                            {/* Grid Days */}
+                            {getDaysOfCalendarMonth(calendarMonth).map((day) => {
+                                const isCurrentMonth = day.getMonth() === calendarMonth.getMonth();
+                                const isWorkoutDay = hasWorkoutOnDate(day);
+                                const isToday = day.toDateString() === new Date().toDateString();
+                                const isSelected = selectedDate && day.toDateString() === selectedDate.toDateString();
+
+                                return (
+                                    <button
+                                        key={day.toISOString()}
+                                        onClick={() => {
+                                            if (isSelected) {
+                                                setSelectedDate(null);
+                                            } else {
+                                                setSelectedDate(day);
+                                            }
+                                        }}
+                                        className={`relative aspect-square flex flex-col items-center justify-center rounded-lg text-xs transition-all hover:bg-zinc-800/40 ${
+                                            isCurrentMonth ? "" : "opacity-35"
+                                        }`}
+                                    >
+                                        <span className={`font-semibold ${
+                                            isToday 
+                                                ? "text-lime-400 font-extrabold" 
+                                                : isWorkoutDay 
+                                                    ? "text-zinc-200" 
+                                                    : "text-zinc-400"
+                                        }`}>
+                                            {day.getDate()}
+                                        </span>
+                                        {/* Under-date indicator */}
+                                        {isWorkoutDay && (
+                                            <span className="absolute bottom-1 h-1 w-1 rounded-full bg-lime-400 shadow-[0_0_4px_rgba(163,230,53,0.6)]" />
+                                        )}
+                                        {isSelected && (
+                                            <div className="absolute inset-0 rounded-lg border border-zinc-500 pointer-events-none" />
+                                        )}
+                                        {isToday && !isSelected && (
+                                            <div className="absolute inset-0 rounded-lg border border-lime-500/30 pointer-events-none" />
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {/* Inspect Selected Date Details */}
+                {selectedDate && (
+                    <div className="border-t border-zinc-800/80 pt-3 bg-zinc-950/30 rounded-xl p-3 border border-zinc-800/20 space-y-2 animate-slide-up">
+                        <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-zinc-400">
+                                {selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+                            </span>
+                            <button
+                                onClick={() => setSelectedDate(null)}
+                                className="text-zinc-500 hover:text-zinc-300 font-bold"
+                            >
+                                Clear
+                            </button>
+                        </div>
+                        
+                        {getWorkoutsOnDate(selectedDate).length === 0 ? (
+                            <p className="text-xs text-zinc-500 italic">No workouts logged on this day.</p>
+                        ) : (
+                            <div className="space-y-1.5">
+                                {getWorkoutsOnDate(selectedDate).map((w) => (
+                                    <div
+                                        key={w.id}
+                                        onClick={() => {
+                                            toggleExpanded(w.id);
+                                            document.getElementById(`workout-${w.id}`)?.scrollIntoView({ behavior: 'smooth' });
+                                        }}
+                                        className="flex items-center justify-between bg-zinc-900/60 hover:bg-zinc-800/60 border border-zinc-800/60 p-2 rounded-lg cursor-pointer transition-colors"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <Dumbbell className="h-3.5 w-3.5 text-lime-400" />
+                                            <span className="text-xs font-bold text-zinc-200">{w.name}</span>
+                                        </div>
+                                        <span className="text-[10px] text-zinc-500 font-medium">
+                                            {w.workout_sets?.length || 0} sets
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* SVG Chart */}
@@ -374,6 +713,7 @@ export default function Dashboard() {
                             return (
                                 <div
                                     key={w.id}
+                                    id={`workout-${w.id}`}
                                     onClick={() => toggleExpanded(w.id)}
                                     className="rounded-xl border border-zinc-800 bg-zinc-900/30 overflow-hidden hover:bg-zinc-900/40 transition-colors cursor-pointer"
                                 >

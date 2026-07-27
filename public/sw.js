@@ -1,4 +1,4 @@
-const CACHE_NAME = "carry-lift-v2";
+const CACHE_NAME = "dt-lift-v2";
 const ASSETS_TO_CACHE = ["/", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

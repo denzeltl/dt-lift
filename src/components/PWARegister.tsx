@@ -58,7 +58,7 @@ export default function PWARegister() {
             // Stash the event so it can be triggered later.
             window.deferredPrompt = e;
             // Dispatch custom event to let components know installation is ready
-            window.dispatchEvent(new CustomEvent("carry-lift-install-available"));
+            window.dispatchEvent(new CustomEvent("dt-lift-install-available"));
         };
 
         window.addEventListener("beforeinstallprompt", handleBeforeInstall);

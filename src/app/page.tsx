@@ -37,8 +37,8 @@ export default function Page() {
             const handleInstallAvailable = () => {
                 setInstallable(true);
             };
-            window.addEventListener("carry-lift-install-available", handleInstallAvailable);
-            return () => window.removeEventListener("carry-lift-install-available", handleInstallAvailable);
+            window.addEventListener("dt-lift-install-available", handleInstallAvailable);
+            return () => window.removeEventListener("dt-lift-install-available", handleInstallAvailable);
         }
     }, []);
 
@@ -82,7 +82,7 @@ export default function Page() {
         return (
             <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-3">
                 <Dumbbell className="h-10 w-10 animate-bounce text-lime-400" />
-                <p className="text-sm font-semibold text-zinc-400">Loading Carry Lift...</p>
+                <p className="text-sm font-semibold text-zinc-400">Loading DT Lift...</p>
             </div>
         );
     }
@@ -98,7 +98,7 @@ export default function Page() {
                             {user.full_name ? user.full_name.substring(0, 2) : user.email.substring(0, 2)}
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-zinc-100">{user.full_name || "Carry Lift User"}</h2>
+                            <h2 className="text-xl font-bold text-zinc-100">{user.full_name || "DT Lift User"}</h2>
                             <p className="text-sm text-zinc-400">{user.email}</p>
                         </div>
                     </div>
@@ -152,7 +152,7 @@ export default function Page() {
                                 <Smartphone className="h-6 w-6" />
                             </div>
                             <div>
-                                <h4 className="font-bold text-zinc-100">Install Carry Lift App</h4>
+                                <h4 className="font-bold text-zinc-100">Install DT Lift App</h4>
                                 <p className="text-sm text-lime-300/80">
                                     Add to your Home Screen for a native experience
                                 </p>
@@ -164,7 +164,7 @@ export default function Page() {
 
                 {/* Info & Credits */}
                 <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-6 text-center text-xs text-zinc-500 space-y-1">
-                    <p className="font-semibold text-zinc-400">Carry Lift v1.0.0</p>
+                    <p className="font-semibold text-zinc-400">DT Lift v1.0.0</p>
                     <p>Created with Next.js, Tailwind v4 and Supabase</p>
                     <p className="text-zinc-600">All rights reserved &copy; 2026</p>
                 </div>
@@ -191,7 +191,7 @@ export default function Page() {
                 </div>
                 <div>
                     <h1 className="text-3xl font-extrabold tracking-tight text-white">
-                        CARRY <span className="text-lime-400">LIFT</span>
+                        DT <span className="text-lime-400">LIFT</span>
                     </h1>
                     <p className="text-xs text-zinc-400 font-medium tracking-wide uppercase mt-1">Gym tracker</p>
                 </div>

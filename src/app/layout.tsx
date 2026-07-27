@@ -17,13 +17,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-    title: "Carry Lift - PWA Gym Workout Tracker",
+    title: "DT Lift - Gym Workout Tracker",
     description:
-        "Carry Lift is a premium, mobile-first gym tracker progressive web application for tracking workouts, templates, and weights.",
+        "DT Lift is a mobile-first gym tracker progressive web application for tracking workouts, templates, and weights.",
     manifest: "/manifest.webmanifest",
     appleWebApp: {
         capable: true,
-        title: "Carry Lift",
+        title: "DT Lift",
         statusBarStyle: "black-translucent",
     },
 };
