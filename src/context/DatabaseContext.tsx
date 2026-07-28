@@ -129,28 +129,28 @@ interface DatabaseContextType {
 const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined);
 
 const DEFAULT_EXERCISES: Exercise[] = [
-    { id: "def-1", name: "Bench Press (Barbell)", category: "Chest" },
-    { id: "def-2", name: "Incline Bench Press (Barbell)", category: "Chest" },
-    { id: "def-3", name: "Dumbbell Flye", category: "Chest" },
-    { id: "def-4", name: "Push-up", category: "Chest" },
-    { id: "def-5", name: "Squat (Barbell)", category: "Legs" },
-    { id: "def-6", name: "Leg Press", category: "Legs" },
-    { id: "def-7", name: "Lying Leg Curl", category: "Legs" },
-    { id: "def-8", name: "Leg Extension", category: "Legs" },
-    { id: "def-9", name: "Deadlift (Barbell)", category: "Back" },
-    { id: "def-10", name: "Pull-up", category: "Back" },
-    { id: "def-11", name: "Lat Pulldown", category: "Back" },
-    { id: "def-12", name: "Bent Over Row (Barbell)", category: "Back" },
-    { id: "def-13", name: "Overhead Press (Barbell)", category: "Shoulders" },
-    { id: "def-14", name: "Lateral Raise (Dumbbell)", category: "Shoulders" },
-    { id: "def-15", name: "Rear Delt Flye", category: "Shoulders" },
-    { id: "def-16", name: "Bicep Curl (Barbell)", category: "Arms" },
-    { id: "def-17", name: "Hammer Curl (Dumbbell)", category: "Arms" },
-    { id: "def-18", name: "Tricep Pushdown", category: "Arms" },
-    { id: "def-19", name: "Tricep Overhead Extension", category: "Arms" },
-    { id: "def-20", name: "Plank", category: "Core" },
-    { id: "def-21", name: "Crunch", category: "Core" },
-    { id: "def-22", name: "Treadmill Running", category: "Cardio" },
+    { id: "def00000-0000-0000-0000-000000000001", name: "Bench Press (Barbell)", category: "Chest" },
+    { id: "def00000-0000-0000-0000-000000000002", name: "Incline Bench Press (Barbell)", category: "Chest" },
+    { id: "def00000-0000-0000-0000-000000000003", name: "Dumbbell Flye", category: "Chest" },
+    { id: "def00000-0000-0000-0000-000000000004", name: "Push-up", category: "Chest" },
+    { id: "def00000-0000-0000-0000-000000000005", name: "Squat (Barbell)", category: "Legs" },
+    { id: "def00000-0000-0000-0000-000000000006", name: "Leg Press", category: "Legs" },
+    { id: "def00000-0000-0000-0000-000000000007", name: "Lying Leg Curl", category: "Legs" },
+    { id: "def00000-0000-0000-0000-000000000008", name: "Leg Extension", category: "Legs" },
+    { id: "def00000-0000-0000-0000-000000000009", name: "Deadlift (Barbell)", category: "Back" },
+    { id: "def00000-0000-0000-0000-000000000010", name: "Pull-up", category: "Back" },
+    { id: "def00000-0000-0000-0000-000000000011", name: "Lat Pulldown", category: "Back" },
+    { id: "def00000-0000-0000-0000-000000000012", name: "Bent Over Row (Barbell)", category: "Back" },
+    { id: "def00000-0000-0000-0000-000000000013", name: "Overhead Press (Barbell)", category: "Shoulders" },
+    { id: "def00000-0000-0000-0000-000000000014", name: "Lateral Raise (Dumbbell)", category: "Shoulders" },
+    { id: "def00000-0000-0000-0000-000000000015", name: "Rear Delt Flye", category: "Shoulders" },
+    { id: "def00000-0000-0000-0000-000000000016", name: "Bicep Curl (Barbell)", category: "Arms" },
+    { id: "def00000-0000-0000-0000-000000000017", name: "Hammer Curl (Dumbbell)", category: "Arms" },
+    { id: "def00000-0000-0000-0000-000000000018", name: "Tricep Pushdown", category: "Arms" },
+    { id: "def00000-0000-0000-0000-000000000019", name: "Tricep Overhead Extension", category: "Arms" },
+    { id: "def00000-0000-0000-0000-000000000020", name: "Plank", category: "Core" },
+    { id: "def00000-0000-0000-0000-000000000021", name: "Crunch", category: "Core" },
+    { id: "def00000-0000-0000-0000-000000000022", name: "Treadmill Running", category: "Cardio" },
 ];
 
 export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -488,7 +488,7 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     const updateExercise = async (id: string, name: string, category: string): Promise<void> => {
-        if (!isLocalOnly && supabase && user && !id.startsWith("def-")) {
+        if (!isLocalOnly && supabase && user && !id.startsWith("def")) {
             const { error } = await supabase.from("exercises").update({ name, category }).eq("id", id);
             if (!error) {
                 setDbExercises((prev) => prev.map((ex) => (ex.id === id ? { ...ex, name, category } : ex)));
@@ -510,7 +510,7 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     const updateExerciseNotes = async (id: string, notes: string): Promise<void> => {
-        if (!isLocalOnly && supabase && user && !id.startsWith("def-")) {
+        if (!isLocalOnly && supabase && user && !id.startsWith("def")) {
             const { error } = await supabase.from("exercises").update({ notes }).eq("id", id);
             if (!error) {
                 setDbExercises((prev) => prev.map((ex) => (ex.id === id ? { ...ex, notes } : ex)));
@@ -532,7 +532,7 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     const deleteExercise = async (id: string): Promise<void> => {
-        if (!isLocalOnly && supabase && user && !id.startsWith("def-")) {
+        if (!isLocalOnly && supabase && user && !id.startsWith("def")) {
             const { error } = await supabase.from("exercises").delete().eq("id", id);
             if (!error) {
                 setDbExercises((prev) => prev.filter((ex) => ex.id !== id));

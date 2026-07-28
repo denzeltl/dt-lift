@@ -219,7 +219,6 @@ export default function Exercises() {
                 ) : (
                     <div className="grid gap-2">
                         {filteredExercises.map((ex) => {
-                            const isCustom = ex.id && !ex.id.startsWith("def-");
                             const perf = lastPerformance[ex.id];
                             const pr = personalRecords[ex.id];
 
@@ -235,11 +234,6 @@ export default function Exercises() {
                                                 <span className="rounded bg-zinc-850 py-0.5 text-xs font-bold text-zinc-400">
                                                     {ex.category}
                                                 </span>
-                                                {isCustom && (
-                                                    <span className="rounded bg-lime-500/15 border border-lime-500/20 px-2 py-0.5 text-xs font-bold text-lime-400">
-                                                        Custom
-                                                    </span>
-                                                )}
                                             </div>
                                         </div>
 

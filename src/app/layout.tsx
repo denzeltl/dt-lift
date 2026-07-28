@@ -21,6 +21,16 @@ export const metadata: Metadata = {
     description:
         "DT Lift is a mobile-first gym tracker progressive web application for tracking workouts, templates, and weights.",
     manifest: "/manifest.webmanifest",
+    icons: {
+        icon: [
+            { url: "/favicon.ico", sizes: "any" },
+            { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
+            { url: "/icon-512.png", type: "image/png", sizes: "512x512" },
+        ],
+        apple: [
+            { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+        ],
+    },
     appleWebApp: {
         capable: true,
         title: "DT Lift",
