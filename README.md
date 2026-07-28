@@ -8,9 +8,9 @@ DT Lift is a mobile-first, gym workout tracker designed as a Progressive Web App
 
 _Below are screenshots of DT Lift in action on mobile devices._
 
-|                        Dashboard                        |                  Active Workout                   |                     Account                     |
-| :-----------------------------------------------------: | :-----------------------------------------------: | :---------------------------------------------: |
-| ![Dashboard Screen](./public/dt-lift-dashboard.png.png) | ![Active Screen](./public/dt-lift-active.png.png) | ![Account Screen](./public/dt-lift-account.png) |
+|                      Dashboard                      |                Active Workout                 |                     Account                     |
+| :-------------------------------------------------: | :-------------------------------------------: | :---------------------------------------------: |
+| ![Dashboard Screen](./public/dt-lift-dashboard.png) | ![Active Screen](./public/dt-lift-active.png) | ![Account Screen](./public/dt-lift-account.png) |
 
 ---
 
