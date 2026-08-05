@@ -2,6 +2,8 @@
 
 DT Lift is a mobile-first, gym workout tracker designed as a Progressive Web Application (PWA). It empowers users to track their workouts, manage custom templates, browse and manage an exercise library, and log weights and reps with ease. It features full Supabase integration for cloud sync, alongside a fully-functional local fallback/offline guest mode.
 
+View project [here](https://dt-lift.vercel.app/)
+
 ---
 
 ## 📸 Screenshots
@@ -49,8 +51,8 @@ _Below are screenshots of DT Lift in action on mobile devices._
 1. **Clone the repository:**
 
     ```bash
-    git clone https://github.com/denzeltl/carry-lift.git
-    cd carry-lift
+    git clone https://github.com/denzeltl/dt-lift.git
+    cd dt-lift
     ```
 
 2. **Install dependencies:**
