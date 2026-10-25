@@ -62,7 +62,7 @@ const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
 const playChime = () => {
     if (typeof window === "undefined") return;
     try {
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        const AudioContextClass = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
         if (!AudioContextClass) return;
         const ctx = new AudioContextClass();
 
@@ -130,6 +130,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
                     exercise: exercises.find((e) => e.id === le.exerciseId),
                     lastPerformance: getLastPerformance(le.exerciseId),
                 }));
+                // eslint-disable-next-line react-hooks/set-state-in-effect -- restoring from localStorage, which SSR cannot see
                 setActiveWorkout(parsed);
 
                 // Calculate duration based on saved start time
@@ -157,6 +158,8 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 console.error("Failed to restore rest timer", e);
             }
         }
+        // Re-run only when the exercise list loads; getLastPerformance is a new function every render.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [exercises]);
 
     // 2. Active Workout Durations Clock
@@ -166,9 +169,8 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 const elapsed = Math.floor((Date.now() - new Date(activeWorkout.startTime).getTime()) / 1000);
                 setWorkoutDuration(elapsed > 0 ? elapsed : 0);
             }, 1000);
-        } else {
-            setWorkoutDuration(0);
-            if (timerRef.current) clearInterval(timerRef.current);
+        } else if (timerRef.current) {
+            clearInterval(timerRef.current);
         }
 
         return () => {
@@ -640,7 +642,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         <WorkoutContext.Provider
             value={{
                 activeWorkout,
-                workoutDuration,
+                workoutDuration: activeWorkout ? workoutDuration : 0,
                 restTimer,
                 startWorkout,
                 addExerciseToWorkout,

@@ -4,7 +4,7 @@ import React, { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDatabase, Template, SetTemplate } from "@/context/DatabaseContext";
 import { useWorkout } from "@/context/WorkoutContext";
-import { ClipboardList, Plus, Trash2, X, Search, Check, Play, Pencil, Timer, RefreshCw } from "lucide-react";
+import { ClipboardList, Plus, Trash2, X, Search, Play, Pencil, Timer, RefreshCw } from "lucide-react";
 
 export default function Templates() {
     const { user, templates, exercises, saveTemplate, deleteTemplate, isLoading } = useDatabase();
@@ -279,37 +279,25 @@ export default function Templates() {
         updateSetInEditor(exIdx, setIdx, { weight: storedKg });
     };
 
-    const formatRestTimeLabel = (seconds: number | null | undefined) => {
-        if (!seconds) return null;
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        if (secs === 0) {
-            return `${seconds}s (${mins}m)`;
-        }
-        return `${seconds}s (${mins}m ${secs}s)`;
-    };
-
     return (
         <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-black text-zinc-100 flex items-center space-x-2">
-                        <ClipboardList className="h-6 w-6 text-lime-400" />
-                        <span>Templates</span>
-                    </h1>
-                    <p className="text-sm text-zinc-400 font-medium">Start workout or create, edit, add routines.</p>
+                    <h1 className="text-4xl text-zinc-100">Templates</h1>
+                    <p className="mt-1 text-zinc-500">Your saved routines. Start one in a tap.</p>
                 </div>
                 <button
                     onClick={openCreator}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl bg-lime-400 text-black shadow-md hover:bg-lime-300 active:scale-95 transition-transform"
+                    aria-label="New template"
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-lime-400 text-white hover:bg-lime-300 btn-stamp"
                 >
                     <Plus className="h-6 w-6" />
                 </button>
             </div>
 
             {/* Quick Start Buttons */}
-            {/* <div className="rounded-xl border border-zinc-800 bg-zinc-900/10 p-4 space-y-3">
+            {/* <div className="rounded-xl border border-zinc-800 bg-zinc-900/10 p-4 space-y-3 slab">
                 <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Quick Start</h3>
                 <button
                     onClick={handleStartEmptyWorkout}
@@ -322,16 +310,16 @@ export default function Templates() {
 
             {/* Routine Templates list */}
             <div className="space-y-3">
-                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
-                    My Templates ({templates.length})
+                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                    {templates.length} {templates.length === 1 ? "template" : "templates"}
                 </h3>
 
                 {templates.length === 0 ? (
-                    <div className="rounded-xl border border-zinc-800 bg-zinc-900/10 p-8 text-center text-zinc-500 space-y-2">
-                        <ClipboardList className="h-8 w-8 text-zinc-700 mx-auto" />
-                        <p className="font-semibold">No workout templates created</p>
+                    <div className="rounded-xl border-2 border-dashed border-zinc-800/40 p-8 text-center text-zinc-500 space-y-2">
+                        <ClipboardList className="h-8 w-8 text-zinc-600 mx-auto" />
+                        <p className="font-display text-xl text-zinc-100">No templates yet</p>
                         <p className="text-sm text-zinc-500">
-                            Click the + button to build your first template routine.
+                            Tap + to build your first routine.
                         </p>
                     </div>
                 ) : (
@@ -340,13 +328,13 @@ export default function Templates() {
                             return (
                                 <div
                                     key={t.id}
-                                    className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-4 space-y-4 hover:border-zinc-700 transition-colors"
+                                    className="rounded-xl p-4 space-y-4 slab"
                                 >
                                     <div className="flex items-start justify-between">
-                                        <div className="space-y-1.5 flex-1 pr-3">
-                                            <h4 className="font-extrabold text-zinc-200">{t.name}</h4>
+                                        <div className="space-y-1.5 flex-1 min-w-0 pr-3">
+                                            <h2 className="text-2xl text-zinc-100">{t.name}</h2>
                                             {t.description && (
-                                                <p className="text-sm text-zinc-400 line-clamp-1">{t.description}</p>
+                                                <p className="text-sm text-zinc-500 line-clamp-2">{t.description}</p>
                                             )}
 
                                             {/* Exercises breakdown */}
@@ -357,13 +345,13 @@ export default function Templates() {
                                                         .join(", ");
                                                     return (
                                                         <div key={idx} className="text-sm text-zinc-400 space-y-0.5">
-                                                            <div className="flex items-center space-x-2">
-                                                                <span className="font-semibold text-zinc-300">
-                                                                    • {te.exercise?.name || "Exercise"}
+                                                            <div className="flex items-center justify-between gap-2 border-b border-zinc-800/15 pb-1.5">
+                                                                <span className="min-w-0 font-semibold text-zinc-100 truncate">
+                                                                    {te.exercise?.name || "Exercise"}
                                                                 </span>
                                                                 {te.rest_time_seconds && (
-                                                                    <span className="rounded bg-zinc-800/80 px-1.5 py-0.5 text-xs text-lime-400 font-bold">
-                                                                        ⏱️ {formatRestTimeLabel(te.rest_time_seconds)}
+                                                                    <span className="shrink-0 font-mono text-xs text-zinc-500">
+                                                                        {te.rest_time_seconds}s rest
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -383,14 +371,16 @@ export default function Templates() {
                                             <button
                                                 onClick={() => openEditorForTemplate(t)}
                                                 title="Edit template"
-                                                className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-lime-400 active:scale-95 transition-all"
+                                                aria-label={`Edit ${t.name}`}
+                                                className="grid h-10 w-10 place-items-center rounded-lg text-zinc-400 hover:bg-zinc-850 hover:text-lime-400 active:scale-90 transition-transform"
                                             >
                                                 <Pencil className="h-4 w-4" />
                                             </button>
                                             <button
                                                 onClick={() => setDeletingTemplate(t)}
                                                 title="Delete template"
-                                                className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-red-400 active:scale-95 transition-all"
+                                                aria-label={`Delete ${t.name}`}
+                                                className="grid h-10 w-10 place-items-center rounded-lg text-zinc-400 hover:bg-zinc-850 hover:text-red-400 active:scale-90 transition-transform"
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </button>
@@ -399,10 +389,10 @@ export default function Templates() {
 
                                     <button
                                         onClick={() => handleStartTemplate(t)}
-                                        className="w-full flex items-center justify-center space-x-2 rounded-xl bg-zinc-800 py-2.5 text-xs font-bold text-zinc-200 hover:bg-zinc-700 hover:text-white active:scale-[0.98] transition-all"
+                                        className="btn-stamp w-full flex items-center justify-center space-x-2 rounded-xl bg-lime-400 py-3 text-sm font-bold uppercase tracking-wide text-white"
                                     >
                                         <Play className="h-3.5 w-3.5 fill-current" />
-                                        <span>Start Routine</span>
+                                        <span>Start {t.name.length > 22 ? "routine" : t.name}</span>
                                     </button>
                                 </div>
                             );
@@ -415,8 +405,8 @@ export default function Templates() {
             {isEditing && (
                 <div className="fixed inset-0 z-50 flex flex-col bg-zinc-950 p-4 overflow-y-auto animate-slide-up">
                     {/* Header */}
-                    <div className="flex items-center justify-between pb-4 border-b border-zinc-900">
-                        <h2 className="text-lg font-black text-zinc-100 flex items-center space-x-2">
+                    <div className="flex items-center justify-between pb-4 border-b border-zinc-800/15">
+                        <h2 className="text-2xl text-zinc-100 flex items-center space-x-2">
                             <ClipboardList className="h-5 w-5 text-lime-400" />
                             <span>{editingTemplateId ? "Edit Template" : "Create Template"}</span>
                         </h2>
@@ -471,7 +461,7 @@ export default function Templates() {
                                             onClick={() => setWeightUnit("kg")}
                                             className={`px-2 py-1 text-[10px] font-black rounded-md transition-all ${
                                                 weightUnit === "kg"
-                                                    ? "bg-lime-400 text-black shadow-sm"
+                                                    ? "bg-lime-400 text-white shadow-sm"
                                                     : "text-zinc-400 hover:text-zinc-200"
                                             }`}
                                         >
@@ -482,7 +472,7 @@ export default function Templates() {
                                             onClick={() => setWeightUnit("lbs")}
                                             className={`px-2 py-1 text-[10px] font-black rounded-md transition-all ${
                                                 weightUnit === "lbs"
-                                                    ? "bg-lime-400 text-black shadow-sm"
+                                                    ? "bg-lime-400 text-white shadow-sm"
                                                     : "text-zinc-400 hover:text-zinc-200"
                                             }`}
                                         >
@@ -514,7 +504,7 @@ export default function Templates() {
                                         return (
                                             <div
                                                 key={exIdx}
-                                                className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-4 space-y-4"
+                                                className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-4 space-y-4 slab"
                                             >
                                                 {/* Exercise Header & Rest Timer Setting */}
                                                 <div className="flex items-start justify-between border-b border-zinc-800 pb-3">
@@ -603,7 +593,7 @@ export default function Templates() {
 
                                                         <button
                                                             onClick={() => removeExerciseFromEditor(exIdx)}
-                                                            className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-red-400 transition-colors"
+                                                            className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-850 hover:text-red-400 transition-colors"
                                                         >
                                                             <X className="h-4 w-4" />
                                                         </button>
@@ -798,7 +788,7 @@ export default function Templates() {
                     </div>
 
                     {/* Footer Save Button */}
-                    <div className="pt-4 border-t border-zinc-900 bg-zinc-950 mt-4 flex space-x-3">
+                    <div className="pt-4 border-t border-zinc-800/15 bg-zinc-950 mt-4 flex space-x-3">
                         <button
                             onClick={() => setIsEditing(false)}
                             className="flex-1 rounded-xl border border-zinc-800 bg-zinc-900/30 py-3.5 text-sm font-bold text-zinc-300 active:scale-[0.98] transition-all"
@@ -807,7 +797,7 @@ export default function Templates() {
                         </button>
                         <button
                             onClick={handleSaveTemplate}
-                            className="flex-1 rounded-xl bg-lime-400 py-3.5 text-sm font-extrabold text-black hover:bg-lime-300 active:scale-[0.98] transition-all"
+                            className="flex-1 rounded-xl bg-lime-400 py-3.5 text-sm font-extrabold text-white hover:bg-lime-300 active:scale-[0.98] transition-all btn-stamp"
                         >
                             Save Template
                         </button>
@@ -819,8 +809,8 @@ export default function Templates() {
             {showPicker && (
                 <div className="fixed inset-0 z-65 flex flex-col bg-zinc-950 p-4 animate-slide-up">
                     {/* Header */}
-                    <div className="flex items-center justify-between pb-3 border-b border-zinc-900">
-                        <h3 className="text-lg font-bold text-zinc-100">
+                    <div className="flex items-center justify-between pb-3 border-b border-zinc-800/15">
+                        <h3 className="font-display text-2xl text-zinc-100">
                             {pickingSubstituteForIndex !== null ? "Select Substitute Exercise" : "Select Exercise"}
                         </h3>
                         <button
@@ -828,7 +818,7 @@ export default function Templates() {
                                 setShowPicker(false);
                                 setPickingSubstituteForIndex(null);
                             }}
-                            className="rounded-lg bg-zinc-950 p-1 text-zinc-400 hover:text-zinc-200"
+                            aria-label="Close" className="grid h-10 w-10 place-items-center rounded-lg border-2 border-zinc-800 bg-zinc-900 text-zinc-100 active:scale-90 transition-transform"
                         >
                             <X className="h-5 w-5" />
                         </button>
@@ -852,10 +842,10 @@ export default function Templates() {
                             <button
                                 key={cat}
                                 onClick={() => setSelectedCategory(cat)}
-                                className={`rounded-lg px-3 py-1.5 text-xs font-bold whitespace-nowrap transition-colors ${
+                                className={`rounded-lg border-2 px-3 py-1.5 text-sm font-bold whitespace-nowrap transition-colors ${
                                     selectedCategory === cat
-                                        ? "bg-lime-400 text-black"
-                                        : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200"
+                                        ? "bg-lime-400 border-zinc-800 text-white"
+                                        : "bg-zinc-900 border-zinc-800/25 text-zinc-400 hover:text-zinc-100"
                                 }`}
                             >
                                 {cat}
@@ -872,10 +862,10 @@ export default function Templates() {
                                 <div
                                     key={ex.id}
                                     onClick={() => handleSelectExerciseInPicker(ex.id)}
-                                    className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/20 p-3.5 hover:bg-zinc-900/40 cursor-pointer transition-colors"
+                                    className="flex items-center justify-between rounded-xl p-3.5 cursor-pointer slab slab-press"
                                 >
                                     <div>
-                                        <h4 className="text-sm font-bold text-zinc-200">{ex.name}</h4>
+                                        <h4 className="font-bold text-zinc-100">{ex.name}</h4>
                                         <p className="text-sm text-zinc-500 font-semibold">{ex.category}</p>
                                     </div>
                                     <div className="rounded-lg bg-zinc-850 p-1.5 text-zinc-500 hover:text-lime-400 flex items-center space-x-1">
@@ -890,8 +880,8 @@ export default function Templates() {
 
             {/* DELETE CONFIRMATION MODAL */}
             {deletingTemplate && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fade-in">
-                    <div className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-950 p-6 space-y-5 shadow-2xl">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 animate-fade-in">
+                    <div className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-950 p-6 space-y-5 slab">
                         <div className="flex items-center space-x-3 text-red-400">
                             <div className="rounded-full bg-red-500/10 p-3 border border-red-500/20">
                                 <Trash2 className="h-6 w-6" />
@@ -918,7 +908,7 @@ export default function Templates() {
                             <button
                                 type="button"
                                 onClick={handleConfirmDeleteTemplate}
-                                className="flex-1 rounded-xl bg-red-600 py-3 text-xs font-bold text-white hover:bg-red-500 active:scale-[0.98] transition-all shadow-lg shadow-red-600/20"
+                                className="flex-1 rounded-xl bg-red-600 py-3 text-xs font-bold text-white hover:bg-red-500 active:scale-[0.98] transition-all btn-stamp"
                             >
                                 Delete
                             </button>

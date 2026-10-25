@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDatabase } from "@/context/DatabaseContext";
-import { Dumbbell, LogOut, CheckCircle2, Cloud, HardDrive, Smartphone } from "lucide-react";
+import { LogOut, Cloud, HardDrive, Smartphone } from "lucide-react";
+import Logo from "@/components/Logo";
 
 type BeforeInstallPromptEvent = Event & {
     prompt: () => void;
@@ -82,8 +83,8 @@ export default function Page() {
     if (isLoading) {
         return (
             <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-3">
-                <Dumbbell className="h-10 w-10 animate-bounce text-lime-400" />
-                <p className="text-sm font-semibold text-zinc-400">Loading DT Lift...</p>
+                <Logo className="h-14 w-14 motion-safe:animate-spin [animation-duration:1.4s]" />
+                <p className="font-mono text-xs font-semibold uppercase tracking-wider text-zinc-500">Loading your log…</p>
             </div>
         );
     }
@@ -91,50 +92,49 @@ export default function Page() {
     // LOGGED IN: Profile View
     if (user) {
         return (
-            <div className="space-y-6 pt-4">
+            <div className="space-y-5">
+                <h1 className="text-4xl text-zinc-100">Account</h1>
                 {/* Profile Card */}
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 backdrop-blur">
+                <div className="rounded-2xl p-5 slab">
                     <div className="flex items-center space-x-4">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-lime-400 text-black font-extrabold text-2xl uppercase shadow-md shadow-lime-400/10">
+                        <div className="font-display flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-[2.5px] border-zinc-800 bg-volt text-zinc-100 text-2xl">
                             {user.full_name ? user.full_name.substring(0, 2) : user.email.substring(0, 2)}
                         </div>
-                        <div>
-                            <h2 className="text-xl font-bold text-zinc-100">{user.full_name || "DT Lift User"}</h2>
-                            <p className="text-sm text-zinc-400">{user.email}</p>
+                        <div className="min-w-0">
+                            <h2 className="text-2xl text-zinc-100 break-words">{user.full_name || "DT Lift User"}</h2>
+                            <p className="text-sm text-zinc-500 truncate">{user.email}</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Database Connection Status Card */}
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 space-y-4">
-                    <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">Sync Status</h3>
+                <div className="rounded-2xl p-5 space-y-4 slab">
+                    <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Where your data lives</h3>
                     <div className="flex items-start space-x-3">
                         {isLocalOnly ? (
                             <>
-                                <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-2.5 text-amber-400 mt-0.5">
+                                <div className="rounded-lg border-2 border-zinc-800 bg-zinc-950 p-2.5 text-amber-400 mt-0.5">
                                     <HardDrive className="h-5 w-5" />
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-bold text-zinc-200">Guest Mode (Local Storage Only)</h4>
-                                    <p className="text-sm text-zinc-400 leading-relaxed mt-1">
-                                        Your workout templates and history are stored locally in your browser cache.
+                                    <h4 className="font-bold text-zinc-100">On this device only</h4>
+                                    <p className="text-sm text-zinc-500 leading-relaxed mt-1">
+                                        You&apos;re in guest mode. Templates and history are saved in this browser, so clearing site data deletes them.
                                     </p>
-                                    <p className="text-xs text-amber-400 leading-relaxed mt-2 italic font-medium">
-                                        To sync across devices and back up data in the cloud, log in or sign up for an
-                                        account.
+                                    <p className="text-sm text-amber-400 leading-relaxed mt-2 font-semibold">
+                                        Sign up to back up your log and use it on other devices.
                                     </p>
                                 </div>
                             </>
                         ) : (
                             <>
-                                <div className="rounded-lg bg-lime-500/10 border border-lime-500/20 p-2.5 text-lime-400 mt-0.5">
+                                <div className="rounded-lg border-2 border-zinc-800 bg-volt p-2.5 text-zinc-100 mt-0.5">
                                     <Cloud className="h-5 w-5" />
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-bold text-zinc-200">Cloud Connected</h4>
-                                    <p className="text-sm text-zinc-400 leading-relaxed mt-1">
-                                        Your account is synced securely with the database. Workouts are saved in
-                                        real-time.
+                                    <h4 className="font-bold text-zinc-100">Synced to the cloud</h4>
+                                    <p className="text-sm text-zinc-500 leading-relaxed mt-1">
+                                        Every workout saves to your account as you log it, on any device.
                                     </p>
                                 </div>
                             </>
@@ -146,26 +146,27 @@ export default function Page() {
                 {installable && (
                     <button
                         onClick={handleInstallClick}
-                        className="flex w-full items-center justify-between rounded-2xl border border-lime-500/30 bg-lime-500/10 p-5 text-left text-zinc-100 hover:bg-lime-500/15 active:scale-[0.99] transition-all"
+                        className="flex w-full items-center justify-between gap-3 rounded-2xl p-5 text-left text-zinc-100 slab slab-press"
                     >
                         <div className="flex items-center space-x-4">
-                            <div className="rounded-xl bg-lime-400 p-2.5 text-black">
+                            <div className="shrink-0 rounded-xl border-2 border-zinc-800 bg-lime-400 p-2.5 text-white">
                                 <Smartphone className="h-6 w-6" />
                             </div>
                             <div>
-                                <h4 className="font-bold text-zinc-100">Install DT Lift App</h4>
-                                <p className="text-sm text-lime-300/80">
-                                    Add to your Home Screen for a native experience
+                                <h4 className="font-bold text-zinc-100">Install DT Lift</h4>
+                                <p className="text-sm text-zinc-500">
+                                    Add it to your home screen. It opens full-screen and works offline.
                                 </p>
                             </div>
                         </div>
-                        <div className="rounded-full bg-zinc-800 p-1 px-3 text-sm font-bold text-lime-400">Install</div>
+                        <div className="shrink-0 rounded-full border-2 border-zinc-800 px-3 py-1 text-sm font-bold text-lime-400">Install</div>
                     </button>
                 )}
 
                 {/* Info & Credits */}
-                <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-6 text-center text-xs text-zinc-500 space-y-1">
-                    <p className="font-semibold text-zinc-400">DT Lift v1.0.0</p>
+                <div className="flex flex-col items-center p-4 text-center text-xs text-zinc-500 space-y-1">
+                    <Logo className="h-9 w-9 mb-2" />
+                    <p className="font-mono font-semibold text-zinc-400">DT Lift v1.0.0</p>
                     <p>Created with Next.js, Tailwind v4 and Supabase</p>
                     <p className="text-zinc-600">All rights reserved &copy; 2026</p>
                 </div>
@@ -173,10 +174,10 @@ export default function Page() {
                 {/* Log Out Button */}
                 <button
                     onClick={logout}
-                    className="flex w-full items-center justify-center space-x-2 rounded-xl border border-red-500/30 bg-red-950/20 py-3.5 text-sm font-bold text-red-400 hover:bg-red-950/30 active:scale-[0.98] transition-all"
+                    className="flex w-full items-center justify-center space-x-2 rounded-xl border-2 border-red-400 bg-zinc-900 py-3.5 font-bold text-red-400 active:scale-[0.98] transition-transform"
                 >
                     <LogOut className="h-4.5 w-4.5" />
-                    <span>Log Out Account</span>
+                    <span>Log out</span>
                 </button>
             </div>
         );
@@ -184,31 +185,32 @@ export default function Page() {
 
     // NOT LOGGED IN: Auth Form
     return (
-        <div className="flex min-h-[75vh] flex-col justify-center py-6">
+        <div className="flex min-h-[85dvh] flex-col justify-center py-6">
             {/* Brand Header */}
-            <div className="flex flex-col items-center justify-center text-center space-y-3 mb-8 animate-fade-in">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-lime-400 p-3 shadow-lg shadow-lime-500/20">
-                    <Dumbbell className="h-10 w-10 text-black transform" />
-                </div>
-                <div>
-                    <h1 className="text-3xl font-extrabold tracking-tight text-white">
-                        DT <span className="text-lime-400">LIFT</span>
-                    </h1>
-                    <p className="text-xs text-zinc-400 font-medium tracking-wide uppercase mt-1">Gym tracker</p>
+            <div className="mb-8 flex items-center gap-4 animate-fade-in">
+                <Logo className="h-24 w-24 shrink-0 motion-safe:animate-[plate-load_600ms_var(--ease-stamp)]" />
+                <div className="min-w-0">
+                    <span className="tag-volt inline-block -rotate-3 rounded-[4px] px-1.5 font-mono text-[11px] font-semibold uppercase tracking-wider">
+                        Gym tracker
+                    </span>
+                    <h1 className="mt-2 text-6xl leading-[0.85] text-zinc-100">DT Lift</h1>
+                    <p className="mt-2 text-zinc-500">Log every set. Beat last week.</p>
                 </div>
             </div>
 
             {/* Auth Card */}
             <div className="glass-panel rounded-2xl p-6 shadow-xl space-y-6">
                 {/* Toggle LogIn/SignUp tabs */}
-                <div className="grid grid-cols-2 rounded-lg bg-zinc-950 p-1 border border-zinc-800">
+                <div className="grid grid-cols-2 rounded-lg bg-zinc-950 p-1 border-2 border-zinc-800" role="tablist">
                     <button
                         onClick={() => {
                             setIsSignUp(false);
                             setAuthError("");
                         }}
-                        className={`rounded-md py-2 text-xs font-bold transition-all ${
-                            !isSignUp ? "bg-zinc-800 text-lime-400" : "text-zinc-400 hover:text-zinc-200"
+                        role="tab"
+                        aria-selected={!isSignUp}
+                        className={`rounded-md py-2.5 text-sm font-bold uppercase tracking-wide transition-colors duration-150 ${
+                            !isSignUp ? "bg-zinc-100 text-zinc-950" : "text-zinc-500 hover:text-zinc-100"
                         }`}
                     >
                         Log In
@@ -218,8 +220,10 @@ export default function Page() {
                             setIsSignUp(true);
                             setAuthError("");
                         }}
-                        className={`rounded-md py-2 text-xs font-bold transition-all ${
-                            isSignUp ? "bg-zinc-800 text-lime-400" : "text-zinc-400 hover:text-zinc-200"
+                        role="tab"
+                        aria-selected={isSignUp}
+                        className={`rounded-md py-2.5 text-sm font-bold uppercase tracking-wide transition-colors duration-150 ${
+                            isSignUp ? "bg-zinc-100 text-zinc-950" : "text-zinc-500 hover:text-zinc-100"
                         }`}
                     >
                         Sign Up
@@ -227,7 +231,7 @@ export default function Page() {
                 </div>
 
                 {authError && (
-                    <div className="rounded-lg bg-red-950/40 border border-red-500/20 p-3 text-center text-xs font-semibold text-red-400">
+                    <div role="alert" className="rounded-lg bg-red-950 border-2 border-red-400 p-3 text-center text-sm font-semibold text-red-400 animate-fade-in">
                         {authError}
                     </div>
                 )}
@@ -235,50 +239,58 @@ export default function Page() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {isSignUp && (
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
-                                Full Name
+                            <label htmlFor="auth-name" className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                                Full name
                             </label>
                             <input
+                                id="auth-name"
+                                autoComplete="name"
                                 type="text"
                                 required
                                 placeholder="Juan Dela Cruz"
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
-                                className="w-full rounded-xl border border-zinc-800 bg-zinc-950/50 px-4 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:border-lime-500/50 focus:outline-none transition-colors"
+                                className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none"
                             />
                         </div>
                     )}
 
                     <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
-                            Email Address
+                        <label htmlFor="auth-email" className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                            Email
                         </label>
                         <input
+                            id="auth-email"
+                            autoComplete="email"
                             type="email"
                             required
                             placeholder="name@example.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full rounded-xl border border-zinc-800 bg-zinc-950/50 px-4 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:border-lime-500/50 focus:outline-none transition-colors"
+                            className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none"
                         />
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Password</label>
+                        <label htmlFor="auth-password" className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                            Password
+                        </label>
                         <input
+                            id="auth-password"
+                            autoComplete={isSignUp ? "new-password" : "current-password"}
                             type="password"
                             required
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full rounded-xl border border-zinc-800 bg-zinc-950/50 px-4 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:border-lime-500/50 focus:outline-none transition-colors"
+                            className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none"
                         />
                     </div>
 
                     <button
                         type="submit"
                         disabled={authLoading}
-                        className="w-full rounded-xl bg-lime-400 py-3.5 text-sm font-extrabold text-black shadow-md hover:bg-lime-300 disabled:bg-zinc-700 disabled:text-zinc-500 active:scale-[0.98] transition-all"
+                        className="w-full rounded-xl bg-lime-400 py-3.5 font-bold uppercase tracking-wide text-white hover:bg-lime-300 disabled:bg-zinc-700 disabled:text-zinc-500 btn-stamp"
                     >
                         {authLoading ? "Authenticating..." : isSignUp ? "Create Account" : "Log In"}
                     </button>
@@ -286,7 +298,7 @@ export default function Page() {
 
                 <div className="relative flex py-2 items-center">
                     <div className="flex-grow border-t border-zinc-800/80"></div>
-                    <span className="flex-shrink mx-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                    <span className="flex-shrink mx-4 font-mono text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
                         Or
                     </span>
                     <div className="flex-grow border-t border-zinc-800/80"></div>
@@ -298,9 +310,9 @@ export default function Page() {
                         loginAsGuest();
                         router.push("/dashboard");
                     }}
-                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900/30 py-3.5 text-sm font-bold text-zinc-300 hover:bg-zinc-900/50 active:scale-[0.98] transition-all"
+                    className="btn-stamp w-full rounded-xl bg-zinc-900 py-3.5 font-bold text-zinc-100"
                 >
-                    Try as Guest (Local Storage)
+                    Try it as a guest
                 </button>
             </div>
         </div>

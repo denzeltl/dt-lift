@@ -1,90 +1,290 @@
 @import "tailwindcss";
 
+/* DT Lift: "Chalk & stencil / bumper plate". Tokens mirror DESIGN.md.
+   The zinc / lime / red / amber scales are remapped so existing class names land on the poster palette:
+   zinc is inverted (950 = paper, 100 = ink, 800 = ink outline), lime is plate red. */
+
 :root {
-  --background: #09090b;
-  /* Zinc 950 */
-  --foreground: #f4f4f5;
-  /* Zinc 100 */
+  --paper: #f4efe6;
+  --card: #fffdf8;
+  --ink: #15111f;
+  --plate: #c93519;
+  --volt: #d4ff3a;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-stamp: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --background: var(--paper);
+  --foreground: var(--ink);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-volt: var(--volt);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-plex-mono);
+  --font-display: var(--font-stencil);
   --breakpoint-sm: 480px;
+
+  --color-zinc-50: #0d0a14;
+  --color-zinc-100: #15111f;
+  --color-zinc-200: #221e2b;
+  --color-zinc-300: #34303c;
+  --color-zinc-400: #4f4957;
+  --color-zinc-500: #6b6458;
+  --color-zinc-600: #8e8679;
+  --color-zinc-700: #d8cfbf;
+  --color-zinc-800: #15111f;
+  --color-zinc-850: #efe8da;
+  --color-zinc-900: #fffdf8;
+  --color-zinc-950: #f4efe6;
+
+  --color-lime-50: #fff1ec;
+  --color-lime-100: #ffe0d6;
+  --color-lime-200: #ffbfa9;
+  --color-lime-300: #e2502f;
+  --color-lime-400: #c93519;
+  --color-lime-500: #b02e15;
+  --color-lime-600: #932610;
+
+  --color-red-300: #c0261a;
+  --color-red-400: #b42318;
+  --color-red-500: #c0261a;
+  --color-red-600: #a31d13;
+  --color-red-950: #fde8e4;
+
+  --color-amber-300: #7a4f00;
+  --color-amber-400: #8a5a00;
+  --color-amber-500: #b07800;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: var(--font-body), "Arial Narrow", sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Custom modern thin scrollbars */
+/* iOS zooms inputs under 16px */
+@media (pointer: coarse) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Page and section titles: stencil, uppercase */
+h1,
+h2,
+.font-display {
+  font-family: var(--font-stencil), serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  line-height: 0.95;
+  text-wrap: balance;
+}
+
+/* Small uppercase labels read as mono tags */
+h3.uppercase,
+label.uppercase,
+p.uppercase.tracking-wider {
+  font-family: var(--font-plex-mono), monospace;
+  letter-spacing: 0.08em;
+}
+
+input,
+textarea,
+select {
+  border-width: 2px !important;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--plate) !important;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+input[type="checkbox"] {
+  accent-color: var(--ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--plate);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Slab: the poster card */
+.slab {
+  background: var(--card);
+  border: 2.5px solid var(--ink) !important;
+  box-shadow: 4px 4px 0 var(--ink);
+  transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
+}
+
+.slab-press:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .slab-press:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 var(--ink);
+  }
+}
+
+/* Stamp button: primary / destructive actions */
+.btn-stamp {
+  border: 2.5px solid var(--ink) !important;
+  box-shadow: 3px 3px 0 var(--ink) !important;
+  transition: transform 120ms var(--ease-out), box-shadow 120ms var(--ease-out), background-color 140ms var(--ease-out) !important;
+}
+
+.btn-stamp:active:not(:disabled) {
+  transform: translate(3px, 3px) !important;
+  box-shadow: 0 0 0 var(--ink) !important;
+}
+
+.btn-stamp:disabled {
+  box-shadow: none !important;
+  border-color: var(--color-zinc-600) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-stamp:hover:not(:disabled) {
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 var(--ink) !important;
+  }
+}
+
+/* Plate check: the signature. A finished set spins onto the bar and lands pressed flat. */
+.plate-check {
+  border-radius: 999px !important;
+  border: 2.5px solid var(--ink) !important;
+  background: var(--card);
+  box-shadow: 2px 2px 0 var(--ink);
+  transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out), background-color 140ms;
+}
+
+.plate-check[data-done="true"] {
+  background: var(--volt) !important;
+  color: var(--ink) !important;
+  box-shadow: 0 0 0 var(--ink);
+  transform: translate(2px, 2px);
+  animation: plate-load 340ms var(--ease-stamp);
+}
+
+@keyframes plate-load {
+  from {
+    transform: translate(0, 0) rotate(-120deg) scale(1.15);
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  to {
+    transform: translate(2px, 2px) rotate(0);
+    box-shadow: 0 0 0 var(--ink);
+  }
+}
+
+/* Volt tag: "done" / "here" marker */
+.tag-volt {
+  background: var(--volt);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+}
+
+/* Rest timer card: ink plate with volt digits */
+.rest-card {
+  background: var(--ink) !important;
+  color: var(--paper) !important;
+  border: 2.5px solid var(--ink) !important;
+  box-shadow: 4px 4px 0 var(--plate) !important;
+}
+
+/* Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #09090b;
+  background: var(--paper);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
-  /* Zinc 800 */
+  background: var(--color-zinc-600);
   border-radius: 999px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
-  /* Zinc 700 */
-}
-
-/* Pulse glow keyframes for active timers */
+/* Active-workout pulse: a hard shadow that breathes, no glow */
 @keyframes pulse-lime {
-
   0%,
   100% {
-    opacity: 1;
-    box-shadow: 0 0 12px rgba(163, 230, 53, 0.4);
+    box-shadow: 3px 3px 0 var(--ink);
   }
-
   50% {
-    opacity: .85;
-    box-shadow: 0 0 4px rgba(163, 230, 53, 0.1);
+    box-shadow: 5px 5px 0 var(--ink);
   }
 }
 
 .animate-pulse-lime {
-  animation: pulse-lime 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulse-lime 1.6s var(--ease-out) infinite;
 }
 
-/* Slide up animations for mobile sheets */
 @keyframes slide-up {
   from {
     transform: translateY(100%);
   }
-
   to {
     transform: translateY(0);
   }
 }
 
 .animate-slide-up {
-  animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slide-up 0.3s var(--ease-out) forwards;
 }
 
-/* Custom glassmorphism cards */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s var(--ease-out);
+}
+
 .glass-panel {
-  background: rgba(24, 24, 27, 0.7);
-  /* Zinc 900 with opacity */
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(63, 63, 70, 0.4);
-  /* Zinc 700 with opacity */
+  background: var(--card);
+  border: 2.5px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
 }

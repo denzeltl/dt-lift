@@ -1,31 +1,37 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useDatabase, Workout } from "@/context/DatabaseContext";
-import { Calendar, Trash2, Clock, Flame, Dumbbell, Award, ChevronDown, ChevronUp, BarChart2, Minus, Plus, Target, ChevronLeft, ChevronRight } from "lucide-react";
+import Logo from "@/components/Logo";
+import { Trash2, Dumbbell, ChevronDown, ChevronUp, BarChart2, Minus, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+
+// Weekly goal lives in localStorage; read it as an external store so SSR renders the default (3).
+const GOAL_KEY = "dt_lift_weekly_goal";
+const GOAL_EVENT = "dt-lift-weekly-goal";
+const readWeeklyGoal = () => {
+    const parsed = parseInt(localStorage.getItem(GOAL_KEY) ?? "", 10);
+    return !isNaN(parsed) && parsed >= 1 && parsed <= 7 ? parsed : 3;
+};
+const subscribeWeeklyGoal = (onChange: () => void) => {
+    window.addEventListener(GOAL_EVENT, onChange);
+    window.addEventListener("storage", onChange);
+    return () => {
+        window.removeEventListener(GOAL_EVENT, onChange);
+        window.removeEventListener("storage", onChange);
+    };
+};
 
 export default function Dashboard() {
     const { user, workouts, deleteWorkout, isLoading } = useDatabase();
     const router = useRouter();
     const [expandedWorkouts, setExpandedWorkouts] = useState<Record<string, boolean>>({});
-    const [weeklyGoal, setWeeklyGoal] = useState(3);
-
-    // Load persisted weekly goal from localStorage
-    useEffect(() => {
-        const stored = localStorage.getItem("dt_lift_weekly_goal");
-        if (stored) {
-            const parsed = parseInt(stored, 10);
-            if (!isNaN(parsed) && parsed >= 1 && parsed <= 7) setWeeklyGoal(parsed);
-        }
-    }, []);
+    const weeklyGoal = useSyncExternalStore(subscribeWeeklyGoal, readWeeklyGoal, () => 3);
 
     const updateWeeklyGoal = (delta: number) => {
-        setWeeklyGoal((prev) => {
-            const next = Math.max(1, Math.min(7, prev + delta));
-            localStorage.setItem("dt_lift_weekly_goal", String(next));
-            return next;
-        });
+        const next = Math.max(1, Math.min(7, weeklyGoal + delta));
+        localStorage.setItem(GOAL_KEY, String(next));
+        window.dispatchEvent(new Event(GOAL_EVENT));
     };
     const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
     const [calendarMonth, setCalendarMonth] = useState(() => new Date());
@@ -249,7 +255,7 @@ export default function Dashboard() {
         const lastWorkouts = [...workouts].slice(0, 7).reverse();
         if (lastWorkouts.length < 2) {
             return (
-                <div className="flex h-28 flex-col items-center justify-center rounded-xl bg-zinc-900/30 border border-zinc-800 text-center p-4">
+                <div className="flex h-28 flex-col items-center justify-center rounded-xl bg-zinc-900/30 border border-zinc-800 text-center p-4 slab">
                     <BarChart2 className="h-6 w-6 text-zinc-500 mb-1" />
                     <p className="text-xs text-zinc-500 font-medium">Log 2+ workouts to see volume charts</p>
                 </div>
@@ -289,16 +295,15 @@ export default function Dashboard() {
         const fillD = `${pathD} L ${points[points.length - 1].x} ${chartHeight - padding} L ${points[0].x} ${chartHeight - padding} Z`;
 
         return (
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/20 p-4">
-                <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3">
-                    Volume Progression (Last 7 Sessions)
-                </h4>
+            <div className="rounded-xl p-4 slab">
+                <h2 className="text-xl text-zinc-100">Volume trend</h2>
+                <p className="mb-3 text-sm text-zinc-500">Total kg lifted, last 7 sessions</p>
                 <div className="relative w-full overflow-hidden flex justify-center">
                     <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-auto">
                         <defs>
                             <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#a3e635" stopOpacity="0.4" />
-                                <stop offset="100%" stopColor="#a3e635" stopOpacity="0.0" />
+                                <stop offset="0%" stopColor="#C93519" stopOpacity="0.28" />
+                                <stop offset="100%" stopColor="#C93519" stopOpacity="0.04" />
                             </linearGradient>
                         </defs>
 
@@ -308,8 +313,9 @@ export default function Dashboard() {
                             y1={padding}
                             x2={chartWidth - padding}
                             y2={padding}
-                            stroke="#27272a"
-                            strokeWidth="0.5"
+                            stroke="#15111F"
+                            strokeOpacity="0.25"
+                            strokeWidth="0.75"
                             strokeDasharray="3"
                         />
                         <line
@@ -317,8 +323,9 @@ export default function Dashboard() {
                             y1={chartHeight / 2}
                             x2={chartWidth - padding}
                             y2={chartHeight / 2}
-                            stroke="#27272a"
-                            strokeWidth="0.5"
+                            stroke="#15111F"
+                            strokeOpacity="0.25"
+                            strokeWidth="0.75"
                             strokeDasharray="3"
                         />
                         <line
@@ -326,8 +333,8 @@ export default function Dashboard() {
                             y1={chartHeight - padding}
                             x2={chartWidth - padding}
                             y2={chartHeight - padding}
-                            stroke="#27272a"
-                            strokeWidth="1"
+                            stroke="#15111F"
+                            strokeWidth="2"
                         />
 
                         {/* Gradient Area */}
@@ -337,8 +344,8 @@ export default function Dashboard() {
                         <path
                             d={pathD}
                             fill="none"
-                            stroke="#a3e635"
-                            strokeWidth="2.5"
+                            stroke="#15111F"
+                            strokeWidth="3"
                             strokeLinecap="round"
                             strokeLinejoin="round"
                         />
@@ -346,15 +353,15 @@ export default function Dashboard() {
                         {/* Data Circles & Text */}
                         {points.map((pt, i) => (
                             <g key={i}>
-                                <circle cx={pt.x} cy={pt.y} r="3.5" fill="#09090b" stroke="#a3e635" strokeWidth="2" />
+                                <circle cx={pt.x} cy={pt.y} r="4.5" fill="#C93519" stroke="#15111F" strokeWidth="2.5" />
                                 <text
                                     x={pt.x}
                                     y={pt.y - 10}
                                     textAnchor="middle"
-                                    fill="#f4f4f5"
+                                    fill="#15111F"
                                     fontSize="10"
-                                    fontWeight="bold"
-                                    fontFamily="monospace"
+                                    fontWeight="600"
+                                    fontFamily="var(--font-plex-mono), monospace"
                                 >
                                     {pt.vol > 1000 ? `${(pt.vol / 1000).toFixed(1)}k` : Math.round(pt.vol)} kg
                                 </text>
@@ -362,9 +369,10 @@ export default function Dashboard() {
                                     x={pt.x}
                                     y={chartHeight - 4}
                                     textAnchor="middle"
-                                    fill="#71717a"
+                                    fill="#6B6458"
                                     fontSize="9"
-                                    fontWeight="bold"
+                                    fontWeight="600"
+                                    fontFamily="var(--font-plex-mono), monospace"
                                 >
                                     {pt.label}
                                 </text>
@@ -380,86 +388,85 @@ export default function Dashboard() {
         <div className="space-y-6">
             {/* Page Title */}
             <div>
-                <h1 className="text-2xl font-black text-zinc-100 flex items-center space-x-2">
-                    <Dumbbell className="h-6 w-6 text-lime-400" />
-                    <span>DT LIFT</span>
-                </h1>
-                <p className="text-sm text-zinc-400 font-medium">Welcome back, your fitness metrics at a glance.</p>
+                <div className="flex items-center gap-3">
+                    <Logo className="h-12 w-12 shrink-0" />
+                    <div className="min-w-0">
+                        <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                            {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+                        </p>
+                        <h1 className="text-4xl text-zinc-100">DT Lift</h1>
+                    </div>
+                </div>
             </div>
 
             {/* Grid of Key Analytics */}
             <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-4 flex items-center space-x-3">
-                    <div className="rounded-lg bg-lime-500/10 border border-lime-500/20 p-2 text-lime-400">
-                        <Award className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Workouts</p>
-                        <p className="text-lg font-black text-zinc-100">{totalWorkouts}</p>
+                <div className="rounded-xl p-3.5 slab">
+                                        <div>
+                        <p className="font-mono text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Workouts</p>
+                        <p className="font-display mt-1.5 text-3xl text-zinc-100">{totalWorkouts}</p>
                     </div>
                 </div>
 
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-4 flex items-center space-x-3">
-                    <div className="rounded-lg bg-lime-500/10 border border-lime-500/20 p-2 text-lime-400">
-                        <Flame className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Week Streak</p>
-                        <p className="text-lg font-black text-zinc-100">
-                            {weekStreak} {weekStreak === 1 ? "wk" : "wks"}
+                <div className="rounded-xl p-3.5 slab">
+                                        <div>
+                        <p className="font-mono text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Week Streak</p>
+                        <p className="font-display mt-1.5 text-3xl text-zinc-100">
+                            {weekStreak}
+                            <span className="ml-1 font-mono text-xs">{weekStreak === 1 ? "wk" : "wks"}</span>
                         </p>
                     </div>
                 </div>
 
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-4 flex items-center space-x-3">
-                    <div className="rounded-lg bg-lime-500/10 border border-lime-500/20 p-2 text-lime-400">
-                        <Dumbbell className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Total Vol</p>
-                        <p className="text-lg font-black text-zinc-100">{totalVolume.toLocaleString()} kg</p>
+                <div className="rounded-xl p-3.5 slab">
+                                        <div>
+                        <p className="font-mono text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Total Vol</p>
+                        <p className="font-display mt-1.5 text-3xl text-zinc-100 break-all">
+                            {Math.round(totalVolume).toLocaleString()}
+                            <span className="ml-1 font-mono text-xs">kg</span>
+                        </p>
                     </div>
                 </div>
 
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-4 flex items-center space-x-3">
-                    <div className="rounded-lg bg-lime-500/10 border border-lime-500/20 p-2 text-lime-400">
-                        <Clock className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Avg Time</p>
-                        <p className="text-lg font-black text-zinc-100">{avgDurationMins} min</p>
+                <div className="rounded-xl p-3.5 slab">
+                                        <div>
+                        <p className="font-mono text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Avg Time</p>
+                        <p className="font-display mt-1.5 text-3xl text-zinc-100">
+                            {avgDurationMins}
+                            <span className="ml-1 font-mono text-xs">min</span>
+                        </p>
                     </div>
                 </div>
             </div>
 
             {/* Weekly Calendar & Goal Card */}
-            <div className={`rounded-xl border p-4 space-y-4 transition-all duration-300 ${
-                thisWeekCount >= weeklyGoal
-                    ? "border-lime-500/40 bg-lime-500/5"
-                    : "border-zinc-800 bg-zinc-900/30"
-            }`}>
+            <div className="rounded-xl p-4 space-y-4 slab">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                        <Calendar className={`h-4.5 w-4.5 ${thisWeekCount >= weeklyGoal ? "text-lime-400" : "text-zinc-400"}`} />
-                        <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">
-                            Workout Calendar
-                        </span>
+                        <h2 className="text-xl text-zinc-100 whitespace-nowrap">This week</h2>
+                        {thisWeekCount >= weeklyGoal && (
+                            <span className="tag-volt whitespace-nowrap rounded-[4px] px-1.5 font-mono text-[11px] font-semibold uppercase -rotate-3">
+                                Goal hit
+                            </span>
+                        )}
                     </div>
                     <div className="flex items-center space-x-2">
                         <button
                             onClick={() => updateWeeklyGoal(-1)}
-                            className="rounded-md p-1 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 active:scale-90 transition-all disabled:opacity-30"
+                            aria-label="Lower weekly goal"
+                            className="grid h-9 w-9 place-items-center rounded-md border-2 border-zinc-800 bg-zinc-900 text-zinc-100 active:scale-90 transition-transform disabled:opacity-30"
                             disabled={weeklyGoal <= 1}
                         >
                             <Minus className="h-3.5 w-3.5" />
                         </button>
-                        <span className="text-xs font-bold text-zinc-400 tabular-nums w-14 text-center">
-                            Goal: {weeklyGoal}x
+                        <span className="font-mono text-xs font-semibold text-zinc-100 whitespace-nowrap px-1 text-center">
+                            {weeklyGoal}x / wk
                         </span>
                         <button
                             onClick={() => updateWeeklyGoal(1)}
-                            className="rounded-md p-1 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 active:scale-90 transition-all disabled:opacity-30"
+                            aria-label="Raise weekly goal"
+                            className="grid h-9 w-9 place-items-center rounded-md border-2 border-zinc-800 bg-zinc-900 text-zinc-100 active:scale-90 transition-transform disabled:opacity-30"
                             disabled={weeklyGoal >= 7}
                         >
                             <Plus className="h-3.5 w-3.5" />
@@ -468,7 +475,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Week Calendar Row (Monday - Sunday) */}
-                <div className="flex items-center justify-between bg-zinc-950/40 rounded-xl p-3 border border-zinc-800/40">
+                <div className="flex items-center justify-between rounded-xl bg-zinc-950 p-2">
                     {getDaysOfCurrentWeek().map((day) => {
                         const isWorkoutDay = hasWorkoutOnDate(day);
                         const isToday = day.toDateString() === new Date().toDateString();
@@ -484,21 +491,22 @@ export default function Dashboard() {
                                         setSelectedDate(day);
                                     }
                                 }}
-                                className="flex flex-col items-center flex-1 py-1 rounded-lg hover:bg-zinc-800/30 transition-colors focus:outline-none"
+                                aria-pressed={!!isSelected}
+                                className={`flex flex-col items-center flex-1 py-1.5 rounded-lg transition-colors ${isSelected ? "bg-zinc-850" : ""}`}
                             >
-                                <span className={`text-[9px] font-extrabold uppercase ${
-                                    isToday ? "text-lime-400 font-black" : "text-zinc-500"
+                                <span className={`font-mono text-[10px] font-semibold uppercase ${
+                                    isToday ? "text-lime-400" : "text-zinc-500"
                                 }`}>
                                     {day.toLocaleDateString("en-US", { weekday: "short" }).substring(0, 3)}
                                 </span>
                                 <div className={`mt-1.5 flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold transition-all ${
                                     isWorkoutDay
-                                        ? "bg-lime-400 text-zinc-950 shadow-[0_0_10px_rgba(163,230,53,0.3)] font-black"
+                                        ? "bg-volt text-zinc-100 border-2 border-zinc-800 font-black"
                                         : isToday
-                                            ? "border border-lime-400 text-lime-400 font-extrabold"
+                                            ? "border-2 border-lime-400 text-lime-400 font-extrabold"
                                             : isSelected
-                                                ? "border border-zinc-500 text-zinc-300"
-                                                : "text-zinc-400 bg-zinc-900/40"
+                                                ? "border-2 border-zinc-800 text-zinc-100"
+                                                : "text-zinc-400"
                                 }`}>
                                     {isWorkoutDay ? (
                                         <Dumbbell className="h-3.5 w-3.5" />
@@ -513,13 +521,13 @@ export default function Dashboard() {
 
                 {/* Progress summary & Expand button */}
                 <div className="flex items-center justify-between text-xs">
-                    <p className="font-bold text-zinc-400">
-                        This week: <span className={thisWeekCount >= weeklyGoal ? "text-lime-400 font-extrabold" : "text-zinc-200"}>{thisWeekCount}</span>
-                        <span className="text-zinc-500"> / {weeklyGoal} workouts</span>
+                    <p className="text-sm font-semibold text-zinc-500">
+                        <span className="font-display text-xl text-zinc-100">{thisWeekCount}</span>
+                        <span> of {weeklyGoal} workouts</span>
                     </p>
                     <button
                         onClick={() => setIsCalendarExpanded(!isCalendarExpanded)}
-                        className="flex items-center space-x-1 font-bold text-lime-400 hover:text-lime-300 transition-colors bg-lime-400/5 px-2.5 py-1 rounded-md border border-lime-500/10 active:scale-95"
+                        className="flex min-h-9 items-center space-x-1 rounded-md border-2 border-zinc-800 bg-zinc-900 px-2.5 font-bold text-zinc-100 transition-transform active:scale-95"
                     >
                         <span>{isCalendarExpanded ? "Hide Month" : "Show Month"}</span>
                         {isCalendarExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
@@ -537,7 +545,7 @@ export default function Dashboard() {
                                     prev.setMonth(prev.getMonth() - 1);
                                     setCalendarMonth(prev);
                                 }}
-                                className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+                                className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200 transition-colors"
                             >
                                 <ChevronLeft className="h-4 w-4" />
                             </button>
@@ -550,7 +558,7 @@ export default function Dashboard() {
                                     next.setMonth(next.getMonth() + 1);
                                     setCalendarMonth(next);
                                 }}
-                                className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+                                className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200 transition-colors"
                             >
                                 <ChevronRight className="h-4 w-4" />
                             </button>
@@ -582,7 +590,7 @@ export default function Dashboard() {
                                                 setSelectedDate(day);
                                             }
                                         }}
-                                        className={`relative aspect-square flex flex-col items-center justify-center rounded-lg text-xs transition-all hover:bg-zinc-800/40 ${
+                                        className={`relative aspect-square flex flex-col items-center justify-center rounded-lg text-xs transition-all hover:bg-zinc-850/40 ${
                                             isCurrentMonth ? "" : "opacity-35"
                                         }`}
                                     >
@@ -597,13 +605,13 @@ export default function Dashboard() {
                                         </span>
                                         {/* Under-date indicator */}
                                         {isWorkoutDay && (
-                                            <span className="absolute bottom-1 h-1 w-1 rounded-full bg-lime-400 shadow-[0_0_4px_rgba(163,230,53,0.6)]" />
+                                            <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-lime-400" />
                                         )}
                                         {isSelected && (
-                                            <div className="absolute inset-0 rounded-lg border border-zinc-500 pointer-events-none" />
+                                            <div className="absolute inset-0 rounded-lg border-2 border-zinc-800 pointer-events-none" />
                                         )}
                                         {isToday && !isSelected && (
-                                            <div className="absolute inset-0 rounded-lg border border-lime-500/30 pointer-events-none" />
+                                            <div className="absolute inset-0 rounded-lg border-2 border-lime-400 pointer-events-none" />
                                         )}
                                     </button>
                                 );
@@ -614,7 +622,7 @@ export default function Dashboard() {
 
                 {/* Inspect Selected Date Details */}
                 {selectedDate && (
-                    <div className="border-t border-zinc-800/80 pt-3 bg-zinc-950/30 rounded-xl p-3 border border-zinc-800/20 space-y-2 animate-slide-up">
+                    <div className="rounded-xl bg-zinc-950 p-3 space-y-2 animate-slide-up">
                         <div className="flex items-center justify-between text-xs">
                             <span className="font-bold text-zinc-400">
                                 {selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
@@ -638,7 +646,7 @@ export default function Dashboard() {
                                             toggleExpanded(w.id);
                                             document.getElementById(`workout-${w.id}`)?.scrollIntoView({ behavior: 'smooth' });
                                         }}
-                                        className="flex items-center justify-between bg-zinc-900/60 hover:bg-zinc-800/60 border border-zinc-800/60 p-2 rounded-lg cursor-pointer transition-colors"
+                                        className="flex items-center justify-between bg-zinc-900 border-2 border-zinc-800 p-2.5 rounded-lg cursor-pointer transition-transform active:scale-[0.98]"
                                     >
                                         <div className="flex items-center space-x-2">
                                             <Dumbbell className="h-3.5 w-3.5 text-lime-400" />
@@ -660,13 +668,10 @@ export default function Dashboard() {
 
             {/* Workout History */}
             <div className="space-y-3">
-                <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider flex items-center space-x-1.5">
-                    <Calendar className="h-4 w-4 text-lime-400" />
-                    <span>Workout History</span>
-                </h3>
+                <h2 className="text-2xl text-zinc-100">History</h2>
 
                 {workouts.length === 0 ? (
-                    <div className="rounded-xl border border-zinc-800 bg-zinc-900/10 p-8 text-center text-zinc-500 space-y-3">
+                    <div className="rounded-xl border border-zinc-800 bg-zinc-900/10 p-8 text-center text-zinc-500 space-y-3 slab">
                         <Dumbbell className="h-8 w-8 text-zinc-700 mx-auto" />
                         <div>
                             <p className="font-semibold">No workouts logged yet</p>
@@ -674,7 +679,7 @@ export default function Dashboard() {
                         </div>
                         <button
                             onClick={() => router.push("/workout")}
-                            className="mx-auto rounded-lg bg-lime-400/10 border border-lime-500/20 px-4 py-2 text-sm font-bold text-lime-400 active:scale-95 transition-transform"
+                            className="btn-stamp mx-auto rounded-lg bg-lime-400 px-4 py-2.5 text-sm font-bold text-white"
                         >
                             Start Workout Now
                         </button>
@@ -715,32 +720,33 @@ export default function Dashboard() {
                                     key={w.id}
                                     id={`workout-${w.id}`}
                                     onClick={() => toggleExpanded(w.id)}
-                                    className="rounded-xl border border-zinc-800 bg-zinc-900/30 overflow-hidden hover:bg-zinc-900/40 transition-colors cursor-pointer"
+                                    className="rounded-xl overflow-hidden cursor-pointer slab slab-press"
                                 >
                                     {/* Top Bar Summary */}
                                     <div className="p-4 flex items-center justify-between">
-                                        <div className="space-y-1">
-                                            <h4 className="text-sm font-black text-zinc-200">{w.name}</h4>
-                                            <div className="flex items-center space-x-2 text-sm text-zinc-400">
+                                        <div className="min-w-0 space-y-1">
+                                            <h3 className="font-bold text-zinc-100 truncate">{w.name}</h3>
+                                            <div className="flex items-center space-x-2 text-sm text-zinc-500">
                                                 <span>{formatDate(w.start_time)}</span>
                                                 <span>•</span>
                                                 <span>{formatDuration(w.start_time, w.end_time)}</span>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center space-x-3">
+                                        <div className="flex shrink-0 items-center space-x-2">
                                             <div className="text-right space-y-0.5">
-                                                <p className="text-sm font-bold text-zinc-300">
+                                                <p className="font-mono text-sm font-semibold text-zinc-100">
                                                     {workoutVolume.toLocaleString()} kg
                                                 </p>
-                                                <p className="text-xs text-zinc-500 font-bold uppercase">
+                                                <p className="font-mono text-[11px] text-zinc-500 font-semibold uppercase">
                                                     {setsCount} sets
                                                 </p>
                                             </div>
 
                                             <button
                                                 onClick={(e) => handleDelete(w.id, e)}
-                                                className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-800 hover:text-red-400 active:scale-95 transition-all"
+                                                aria-label={`Delete ${w.name}`}
+                                                className="grid h-10 w-10 place-items-center rounded-lg text-zinc-500 hover:bg-zinc-850 hover:text-red-400 active:scale-90 transition-transform"
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </button>
@@ -755,7 +761,7 @@ export default function Dashboard() {
 
                                     {/* Expanded exercise details */}
                                     {isExpanded && (
-                                        <div className="border-t border-zinc-800/80 bg-zinc-950/40 p-4 space-y-4 animate-slide-up">
+                                        <div className="border-t-2 border-zinc-800 bg-zinc-950 p-4 space-y-4">
                                             {w.notes && (
                                                 <div className="rounded-lg bg-zinc-900/50 p-2.5 text-xs text-zinc-400 border border-zinc-800/40 italic">
                                                     <span className="font-bold text-zinc-500 not-italic block uppercase text-xs">
@@ -773,14 +779,14 @@ export default function Dashboard() {
                                                 <div className="space-y-3">
                                                     {Object.entries(exerciseMap).map(([exId, data]) => (
                                                         <div key={exId} className="space-y-1">
-                                                            <h5 className="text-sm font-bold text-lime-400">
+                                                            <h4 className="font-display text-lg text-zinc-100">
                                                                 {data.name}
-                                                            </h5>
+                                                            </h4>
                                                             <div className="grid grid-cols-1 gap-x-4 gap-y-1 pl-2">
                                                                 {data.sets?.map((s, idx) => (
                                                                     <div
                                                                         key={idx}
-                                                                        className="text-sm text-zinc-400 flex items-center justify-between py-0.5 border-b border-zinc-900/60"
+                                                                        className="font-mono text-sm text-zinc-300 flex items-center justify-between py-1 border-b border-zinc-800/15"
                                                                     >
                                                                         <span className="text-zinc-500 font-bold text-xs uppercase">
                                                                             Set {idx + 1}
@@ -791,7 +797,7 @@ export default function Dashboard() {
                                                                                     W
                                                                                 </span>
                                                                             )}{" "}
-                                                                            {s.weight} kg x {s.reps}
+                                                                            {s.weight} kg × {s.reps}
                                                                         </span>
                                                                     </div>
                                                                 ))}
