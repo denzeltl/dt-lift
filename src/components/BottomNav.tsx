@@ -2,14 +2,13 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Dumbbell, ClipboardList, Play, Library, User, Timer } from "lucide-react";
 import { useWorkout } from "@/context/WorkoutContext";
 import { useDatabase } from "@/context/DatabaseContext";
 
 export default function BottomNav() {
     const pathname = usePathname();
-    const router = useRouter();
     const { user } = useDatabase();
     const { activeWorkout, workoutDuration, restTimer, adjustRestTimer, stopRestTimer } = useWorkout();
 
@@ -28,36 +27,44 @@ export default function BottomNav() {
         return `${mins}:${secs.toString().padStart(2, "0")}`;
     };
 
+    const tabs = [
+        { href: "/dashboard", label: "Home", Icon: Dumbbell, active: pathname === "/dashboard" },
+        { href: "/templates", label: "Templates", Icon: ClipboardList, active: pathname === "/templates" },
+        { href: "/workout", label: "Start", Icon: Play, active: pathname === "/workout" },
+        { href: "/exercises", label: "Exercises", Icon: Library, active: pathname === "/exercises" },
+        { href: "/", label: "Account", Icon: User, active: pathname === "/" && !!user },
+    ];
+
     return (
         <div className="fixed bottom-0 left-0 right-0 z-40 select-none">
             {/* 1. Floating Rest Timer overlay (shows globally when rest is active) */}
             {restTimer.isActive && restTimer.timeLeft > 0 && pathname !== "/workout" && (
-                <div className="mx-4 mb-2 flex items-center justify-between rounded-xl border border-lime-500/30 bg-zinc-900/95 p-3 shadow-lg shadow-lime-500/5 backdrop-blur-md animate-pulse-lime">
+                <div className="rest-card mx-4 mb-3 flex items-center justify-between rounded-xl p-3">
                     <div className="flex items-center space-x-3">
-                        <div className="rounded-full bg-lime-500/20 p-2 text-lime-400">
+                        <div className="rounded-full border-2 border-volt p-2 text-volt">
                             <Timer className="h-5 w-5 animate-spin" style={{ animationDuration: "6s" }} />
                         </div>
                         <div>
-                            <p className="text-xs text-zinc-400 font-medium uppercase tracking-wider">Rest Timer</p>
-                            <p className="text-lg font-bold text-lime-400">{formatDuration(restTimer.timeLeft)}</p>
+                            <p className="text-xs font-bold uppercase tracking-wide text-zinc-600">Rest</p>
+                            <p className="font-display text-3xl leading-none text-volt">{formatDuration(restTimer.timeLeft)}</p>
                         </div>
                     </div>
                     <div className="flex items-center space-x-2">
                         <button
                             onClick={() => adjustRestTimer(-15)}
-                            className="rounded-lg bg-zinc-800 px-3 py-1.5 text-xs font-semibold text-zinc-300 active:scale-95 transition-transform"
+                            className="min-h-11 rounded-lg bg-zinc-950 px-3 text-xs font-bold text-zinc-100 active:scale-95 transition-transform"
                         >
                             -15s
                         </button>
                         <button
                             onClick={() => adjustRestTimer(15)}
-                            className="rounded-lg bg-zinc-800 px-3 py-1.5 text-xs font-semibold text-zinc-300 active:scale-95 transition-transform"
+                            className="min-h-11 rounded-lg bg-zinc-950 px-3 text-xs font-bold text-zinc-100 active:scale-95 transition-transform"
                         >
                             +15s
                         </button>
                         <button
                             onClick={stopRestTimer}
-                            className="rounded-lg bg-red-950/80 border border-red-500/30 px-3 py-1.5 text-xs font-semibold text-red-400 active:scale-95 transition-transform"
+                            className="min-h-11 rounded-lg bg-lime-400 px-3 text-xs font-bold text-white active:scale-95 transition-transform"
                         >
                             Skip
                         </button>
@@ -69,92 +76,72 @@ export default function BottomNav() {
             {activeWorkout && pathname !== "/workout" && (
                 <Link
                     href="/workout"
-                    className="mx-4 mb-3 flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/90 p-3 shadow-lg hover:bg-zinc-900 transition-colors backdrop-blur-md"
+                    className="mx-4 mb-4 flex items-center justify-between rounded-xl p-3 slab slab-press"
                 >
                     <div className="flex items-center space-x-3">
                         <div className="relative flex h-3 w-3">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-lime-500"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-lime-400 ring-2 ring-zinc-800"></span>
                         </div>
                         <div>
-                            <p className="text-sm font-semibold text-zinc-100">{activeWorkout.name}</p>
+                            <p className="font-bold text-zinc-100 truncate">{activeWorkout.name}</p>
                             <p className="text-xs text-zinc-400">{formatDuration(workoutDuration)} elapsed</p>
                         </div>
                     </div>
-                    <div className="flex items-center space-x-2 rounded-lg bg-lime-500/10 border border-lime-500/20 px-3 py-1.5 text-xs font-semibold text-lime-400">
-                        <Play className="h-3.5 w-3.5 fill-lime-400" />
+                    <div className="btn-stamp flex shrink-0 items-center space-x-1.5 rounded-lg bg-lime-400 px-3 py-1.5 text-xs font-bold uppercase text-white">
+                        <Play className="h-3.5 w-3.5 fill-white" />
                         <span>Resume</span>
                     </div>
                 </Link>
             )}
 
             {/* 3. Primary Bottom Navigation Bar */}
-            <nav className="border-t border-zinc-900 bg-zinc-950/95 pb-safe backdrop-blur-md">
+            <nav className="border-t-[2.5px] border-zinc-800 bg-zinc-900 pb-safe" aria-label="Main">
                 <div className="mx-auto flex h-16 max-w-lg items-center justify-around px-2 text-zinc-500">
-                    <Link
-                        href="/dashboard"
-                        className={`flex flex-col items-center justify-center w-16 h-full transition-colors ${
-                            pathname === "/dashboard" ? "text-lime-400" : "hover:text-zinc-300"
-                        }`}
-                    >
-                        <Dumbbell className="h-5.5 w-5.5" />
-                        <span className="mt-1 text-xs font-medium">Home</span>
-                    </Link>
-
-                    <Link
-                        href="/templates"
-                        className={`flex flex-col items-center justify-center w-16 h-full transition-colors ${
-                            pathname === "/templates" ? "text-lime-400" : "hover:text-zinc-300"
-                        }`}
-                    >
-                        <ClipboardList className="h-5.5 w-5.5" />
-                        <span className="mt-1 text-xs font-medium">Templates</span>
-                    </Link>
-
-                    {/* Active / Quick Workout tab */}
-                    <Link
-                        href="/workout"
-                        className={`relative flex flex-col items-center justify-center w-16 h-full transition-colors -mt-2.5 ${
-                            pathname === "/workout" ? "text-lime-400" : "hover:text-zinc-300"
-                        }`}
-                    >
-                        <div
-                            className={`rounded-full p-2.5 -translate-y-3 shadow-lg border transition-all ${
-                                activeWorkout
-                                    ? "bg-lime-500 border-lime-400 text-black shadow-lime-500/20 animate-pulse-lime"
-                                    : pathname === "/workout"
-                                      ? "bg-zinc-800 border-lime-500/30 text-lime-400"
-                                      : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200"
-                            }`}
-                        >
-                            <Play className={`h-5 w-5 ${activeWorkout ? "fill-black" : ""}`} />
-                        </div>
-                        <span className="absolute bottom-1.5 text-xs font-medium">
-                            {activeWorkout ? "Active" : "Start"}
-                        </span>
-                    </Link>
-
-                    <Link
-                        href="/exercises"
-                        className={`flex flex-col items-center justify-center w-16 h-full transition-colors ${
-                            pathname === "/exercises" ? "text-lime-400" : "hover:text-zinc-300"
-                        }`}
-                    >
-                        <Library className="h-5.5 w-5.5" />
-                        <span className="mt-1 text-xs font-medium">Exercises</span>
-                    </Link>
-
-                    <Link
-                        href="/"
-                        className={`flex flex-col items-center justify-center w-16 h-full transition-colors ${
-                            pathname === "/" && user ? "text-lime-400" : "hover:text-zinc-300"
-                        }`}
-                    >
-                        <User className="h-5.5 w-5.5" />
-                        <span className="mt-1 text-xs font-medium">Account</span>
-                    </Link>
+                    {tabs.map(({ href, label, Icon, active }) =>
+                        href === "/workout" ? (
+                            <Link
+                                key={href}
+                                href={href}
+                                aria-current={active ? "page" : undefined}
+                                className="group relative flex h-full min-w-0 flex-1 flex-col items-center justify-end pb-1.5"
+                            >
+                                <span
+                                    className={`absolute -top-5 grid h-13 w-13 place-items-center rounded-full border-[2.5px] border-zinc-800 bg-lime-400 text-white transition-transform duration-150 group-active:translate-x-[3px] group-active:translate-y-[3px] group-active:shadow-none ${
+                                        activeWorkout ? "animate-pulse-lime" : "shadow-[3px_3px_0_var(--ink)]"
+                                    }`}
+                                >
+                                    <Play className="h-5 w-5 fill-white translate-x-px" />
+                                </span>
+                                <span
+                                    className={`text-xs font-bold uppercase tracking-wide ${active ? "text-zinc-100" : ""}`}
+                                >
+                                    {activeWorkout ? "Active" : "Start"}
+                                </span>
+                            </Link>
+                        ) : (
+                            <Link
+                                key={href}
+                                href={href}
+                                aria-current={active ? "page" : undefined}
+                                className={`group flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1 transition-colors duration-150 ${
+                                    active ? "text-zinc-100" : "hover:text-zinc-100"
+                                }`}
+                            >
+                                <Icon className="h-5 w-5 transition-transform duration-150 group-active:scale-90" />
+                                <span
+                                    className={`rounded-[4px] px-1.5 text-xs font-bold uppercase tracking-wide transition-colors duration-150 ${
+                                        active ? "tag-volt" : "border-2 border-transparent"
+                                    }`}
+                                >
+                                    {label}
+                                </span>
+                            </Link>
+                        ),
+                    )}
                 </div>
             </nav>
+
         </div>
     );
 }

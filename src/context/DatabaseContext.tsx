@@ -88,8 +88,8 @@ interface DatabaseContextType {
     user: Profile | null;
     isLoading: boolean;
     isLocalOnly: boolean;
-    login: (email: string, password: string) => Promise<{ error: any }>;
-    signup: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
+    login: (email: string, password: string) => Promise<{ error: { message: string } | null }>;
+    signup: (email: string, password: string, fullName: string) => Promise<{ error: { message: string } | null }>;
     logout: () => Promise<void>;
     loginAsGuest: () => void;
     exercises: Exercise[];
@@ -266,6 +266,61 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return null;
     };
 
+    // Fetch from Supabase
+    const fetchDbData = async (userId: string) => {
+        if (!supabase) return;
+
+        try {
+            // 1. Fetch custom exercises
+            const { data: exData } = await supabase
+                .from("exercises")
+                .select("*")
+                .or(`user_id.eq.${userId},user_id.is.null`);
+            if (exData) {
+                // filter out pre-seeded from custom list to avoid duplicates if database has default seed too
+                const uniqueDbEx = (exData as Exercise[]).filter((ex) => ex.user_id !== null);
+                setDbExercises(uniqueDbEx);
+            }
+
+            // 2. Fetch templates with exercises
+            const { data: tempData } = await supabase
+                .from("templates")
+                .select(
+                    `
+          *,
+          template_exercises (
+            *,
+            exercise:exercises(*)
+          )
+        `,
+                )
+                .eq("user_id", userId);
+            if (tempData) {
+                setDbTemplates(tempData as Template[]);
+            }
+
+            // 3. Fetch workouts with sets
+            const { data: workData } = await supabase
+                .from("workouts")
+                .select(
+                    `
+          *,
+          workout_sets (
+            *,
+            exercise:exercises(*)
+          )
+        `,
+                )
+                .eq("user_id", userId)
+                .order("start_time", { ascending: false });
+            if (workData) {
+                setDbWorkouts(workData as Workout[]);
+            }
+        } catch (e) {
+            console.error("Error fetching Supabase data, failing back to local storage displays", e);
+        }
+    };
+
     // Initialize Auth & Local Data
     useEffect(() => {
         // Load local storage if client-side
@@ -296,6 +351,9 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         };
 
         loadLocalStorage();
+        // Guest-only builds have nothing async to wait for.
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- mount-time read of localStorage, which SSR cannot see
+        if (!isSupabaseConfigured) setIsLoading(false);
 
         // Setup Supabase listener if configured
         if (isSupabaseConfigured && supabase) {
@@ -344,65 +402,8 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             return () => {
                 subscription.unsubscribe();
             };
-        } else {
-            setIsLoading(false);
         }
     }, []);
-
-    // Fetch from Supabase
-    const fetchDbData = async (userId: string) => {
-        if (!supabase) return;
-
-        try {
-            // 1. Fetch custom exercises
-            const { data: exData } = await supabase
-                .from("exercises")
-                .select("*")
-                .or(`user_id.eq.${userId},user_id.is.null`);
-            if (exData) {
-                // filter out pre-seeded from custom list to avoid duplicates if database has default seed too
-                const uniqueDbEx = exData.filter((ex: any) => ex.user_id !== null) as Exercise[];
-                setDbExercises(uniqueDbEx);
-            }
-
-            // 2. Fetch templates with exercises
-            const { data: tempData } = await supabase
-                .from("templates")
-                .select(
-                    `
-          *,
-          template_exercises (
-            *,
-            exercise:exercises(*)
-          )
-        `,
-                )
-                .eq("user_id", userId);
-            if (tempData) {
-                setDbTemplates(tempData as Template[]);
-            }
-
-            // 3. Fetch workouts with sets
-            const { data: workData } = await supabase
-                .from("workouts")
-                .select(
-                    `
-          *,
-          workout_sets (
-            *,
-            exercise:exercises(*)
-          )
-        `,
-                )
-                .eq("user_id", userId)
-                .order("start_time", { ascending: false });
-            if (workData) {
-                setDbWorkouts(workData as Workout[]);
-            }
-        } catch (e) {
-            console.error("Error fetching Supabase data, failing back to local storage displays", e);
-        }
-    };
 
     // Auth Operations
     const login = async (email: string, password: string) => {

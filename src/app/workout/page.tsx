@@ -177,35 +177,30 @@ export default function Workout() {
         return (
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-2xl font-black text-zinc-100 flex items-center space-x-2">
-                        <Play className="h-6 w-6 text-lime-400" />
-                        <span>Start Workout</span>
-                    </h1>
-                    <p className="text-sm text-zinc-400 font-medium">
-                        Log a blank session or load from a routine template.
-                    </p>
+                    <h1 className="text-4xl text-zinc-100">Start workout</h1>
+                    <p className="mt-1 text-zinc-500">Pick a template, or start empty and add exercises as you go.</p>
                 </div>
 
                 {/* Start Empty */}
                 <button
                     onClick={handleStartEmpty}
-                    className="w-full flex flex-col items-center justify-center rounded-2xl border border-lime-500/20 bg-lime-500/5 hover:bg-lime-500/10 p-6 text-center border-dashed group active:scale-[0.99] transition-all"
+                    className="group w-full flex items-center gap-4 rounded-2xl bg-lime-400 p-5 text-left text-white btn-stamp"
                 >
-                    <div className="rounded-full bg-lime-400 p-2 text-black group-hover:scale-105 transition-transform">
+                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full border-[2.5px] border-zinc-800 bg-zinc-900 text-zinc-100 transition-transform duration-200 group-hover:rotate-90">
                         <Plus className="h-6 w-6" />
-                    </div>
-                    <span className="mt-3 font-bold text-lime-400">Quick Empty Workout</span>
-                    <span className="mt-1 text-xs text-zinc-500 max-w-xs">
-                        Start a custom, ad-hoc workout on the fly. You can add any exercises as you go.
+                    </span>
+                    <span className="min-w-0">
+                        <span className="font-display block text-2xl leading-none">Empty workout</span>
+                        <span className="mt-1 block text-sm text-white/85">Add exercises as you go.</span>
                     </span>
                 </button>
 
                 {/* Templates list */}
                 <div className="space-y-3">
-                    <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Start from Template</h3>
+                    <h2 className="text-2xl text-zinc-100">From a template</h2>
 
                     {templates.length === 0 ? (
-                        <div className="rounded-xl border border-zinc-900 bg-zinc-950 p-6 text-center text-zinc-500">
+                        <div className="rounded-xl border-2 border-dashed border-zinc-800/40 p-6 text-center text-zinc-500">
                             <p className="text-sm">
                                 No templates found. Go to the &ldquo;Templates&rdquo; tab to create one.
                             </p>
@@ -216,19 +211,19 @@ export default function Workout() {
                                 <button
                                     key={t.id}
                                     onClick={() => startWorkout(t)}
-                                    className="w-full flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/30 p-4 hover:border-zinc-700 hover:bg-zinc-900/40 text-left active:scale-[0.99] transition-all"
+                                    className="w-full flex items-center justify-between gap-3 rounded-xl p-4 text-left slab slab-press"
                                 >
-                                    <div>
-                                        <h4 className="font-extrabold text-zinc-200">{t.name}</h4>
+                                    <div className="min-w-0">
+                                        <h3 className="font-display text-xl text-zinc-100">{t.name}</h3>
                                         {t.description && (
-                                            <p className="text-sm text-zinc-400 mt-0.5 line-clamp-1">{t.description}</p>
+                                            <p className="text-sm text-zinc-500 mt-0.5 line-clamp-1">{t.description}</p>
                                         )}
-                                        <p className="text-xs text-zinc-500 font-semibold mt-1 uppercase">
+                                        <p className="font-mono text-[11px] text-zinc-500 font-semibold mt-1.5 uppercase tracking-wider">
                                             {t.template_exercises?.length || 0} exercises
                                         </p>
                                     </div>
-                                    <div className="rounded-full bg-zinc-800 p-2 text-lime-400">
-                                        <Play className="h-4 w-4 fill-lime-400" />
+                                    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full border-[2.5px] border-zinc-800 bg-lime-400 text-white">
+                                        <Play className="h-4 w-4 fill-white translate-x-px" />
                                     </div>
                                 </button>
                             ))}
@@ -244,32 +239,30 @@ export default function Workout() {
         <div className="space-y-6">
             {/* Rest Timer Banner */}
             {restTimer.isActive && restTimer.timeLeft > 0 && (
-                <div className="rounded-2xl border border-lime-500/30 bg-zinc-900 p-4 shadow-lg shadow-lime-500/5 animate-pulse-lime space-y-3">
+                <div className="rest-card rounded-2xl p-4 space-y-3" role="timer" aria-live="off">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                            <Timer className="h-5 w-5 text-lime-400 animate-spin" style={{ animationDuration: "8s" }} />
-                            <span className="text-xs font-extrabold text-zinc-300 uppercase tracking-wider">
-                                Rest Countdown
-                            </span>
+                            <Timer className="h-5 w-5 text-volt" />
+                            <span className="font-mono text-[11px] font-semibold text-zinc-600 uppercase tracking-wider">Rest</span>
                         </div>
-                        <span className="text-xl font-bold text-lime-400">{formatDuration(restTimer.timeLeft)}</span>
+                        <span className="font-display text-6xl leading-none text-volt">{formatDuration(restTimer.timeLeft)}</span>
                     </div>
                     <div className="flex space-x-2">
                         <button
                             onClick={() => adjustRestTimer(-15)}
-                            className="flex-1 rounded-lg bg-zinc-800 py-1.5 text-xs font-bold text-zinc-300"
+                            className="flex-1 min-h-11 rounded-lg bg-zinc-950 text-sm font-bold text-zinc-100 active:scale-95 transition-transform"
                         >
                             -15s
                         </button>
                         <button
                             onClick={() => adjustRestTimer(15)}
-                            className="flex-1 rounded-lg bg-zinc-800 py-1.5 text-xs font-bold text-zinc-300"
+                            className="flex-1 min-h-11 rounded-lg bg-zinc-950 text-sm font-bold text-zinc-100 active:scale-95 transition-transform"
                         >
                             +15s
                         </button>
                         <button
                             onClick={stopRestTimer}
-                            className="flex-1 rounded-lg bg-red-950/60 border border-red-500/20 py-1.5 text-xs font-bold text-red-400"
+                            className="flex-1 min-h-11 rounded-lg bg-lime-400 text-sm font-bold text-white active:scale-95 transition-transform"
                         >
                             Skip Rest
                         </button>
@@ -278,28 +271,27 @@ export default function Workout() {
             )}
 
             {/* Header, Unit Switcher, and Timer */}
-            <div className="flex items-start justify-between border-b border-zinc-900 pb-4">
-                <div className="space-y-1.5 flex-1 pr-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-zinc-800/15 pb-4">
+                <div className="space-y-2 w-full min-w-0">
                     <div className="flex items-center space-x-2">
-                        <h1 className="text-xl font-black text-zinc-100 flex items-center space-x-2">
-                            <span>{localWorkoutName}</span>
-                        </h1>
+                        <h1 className="text-3xl text-zinc-100 break-words">{localWorkoutName}</h1>
                     </div>
 
                     <div className="flex items-center space-x-3 text-zinc-400">
                         <div className="flex items-center space-x-1.5">
-                            <Clock className="h-3.5 w-3.5 text-lime-400" />
-                            <span className="font-bold">{formatDuration(workoutDuration)}</span>
+                            <Clock className="h-4 w-4 text-lime-400" />
+                            <span className="font-mono font-semibold text-zinc-100">{formatDuration(workoutDuration)}</span>
                         </div>
 
                         {/* Active Weight Unit Switcher */}
-                        <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg p-0.5">
+                        <div className="flex items-center bg-zinc-900 border-2 border-zinc-800 rounded-lg p-0.5" role="group" aria-label="Weight unit">
                             <button
                                 type="button"
                                 onClick={() => setActiveWeightUnit("kg")}
-                                className={`px-2 py-0.5 text-[10px] font-black rounded transition-all ${
+                                aria-pressed={activeWeightUnit === "kg"}
+                                className={`px-2.5 py-1 font-mono text-[11px] font-semibold rounded transition-colors ${
                                     activeWeightUnit === "kg"
-                                        ? "bg-lime-400 text-black shadow-sm"
+                                        ? "bg-lime-400 text-white shadow-sm"
                                         : "text-zinc-400 hover:text-zinc-200"
                                 }`}
                             >
@@ -308,9 +300,10 @@ export default function Workout() {
                             <button
                                 type="button"
                                 onClick={() => setActiveWeightUnit("lbs")}
-                                className={`px-2 py-0.5 text-[10px] font-black rounded transition-all ${
+                                aria-pressed={activeWeightUnit === "lbs"}
+                                className={`px-2.5 py-1 font-mono text-[11px] font-semibold rounded transition-colors ${
                                     activeWeightUnit === "lbs"
-                                        ? "bg-lime-400 text-black shadow-sm"
+                                        ? "bg-lime-400 text-white shadow-sm"
                                         : "text-zinc-400 hover:text-zinc-200"
                                 }`}
                             >
@@ -320,16 +313,16 @@ export default function Workout() {
                     </div>
                 </div>
 
-                <div className="flex space-x-2">
+                <div className="ml-auto flex space-x-2">
                     <button
                         onClick={handleCancelClick}
-                        className="rounded-xl border border-red-500/30 bg-red-950/20 px-3.5 py-2.5 text-xs font-bold text-red-400 hover:bg-red-950/30 active:scale-95 transition-all"
+                        className="rounded-xl border-2 border-zinc-800 bg-zinc-900 px-3.5 py-2.5 text-sm font-bold text-red-400 active:scale-95 transition-transform"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={() => setShowFinishModal(true)}
-                        className="rounded-xl bg-lime-400 px-4 py-2.5 text-xs font-black text-black shadow-md hover:bg-lime-300 active:scale-95 transition-all"
+                        className="rounded-xl bg-lime-400 px-4 py-2.5 text-sm font-bold text-white hover:bg-lime-300 btn-stamp"
                     >
                         Finish
                     </button>
@@ -339,7 +332,7 @@ export default function Workout() {
             {/* Exercises Log list */}
             <div className="space-y-4">
                 {activeWorkout.exercises.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-zinc-800 p-10 text-center text-zinc-500 space-y-3">
+                    <div className="rounded-2xl border-2 border-dashed border-zinc-800/40 p-10 text-center text-zinc-500 space-y-3">
                         <AlertTriangle className="h-8 w-8 text-zinc-600 mx-auto" />
                         <p className="text-sm">
                             Your workout is empty. Tap below to add exercises and start tracking sets.
@@ -354,17 +347,17 @@ export default function Workout() {
                             return (
                                 <div
                                     key={exIdx}
-                                    className="rounded-2xl border border-zinc-800 bg-zinc-900/30 p-4 space-y-4"
+                                    className="rounded-2xl border border-zinc-800 bg-zinc-900/30 p-4 space-y-4 slab"
                                 >
                                     {/* Exercise Header */}
-                                    <div className="space-y-2 border-b border-zinc-800 pb-3">
+                                    <div className="space-y-2 border-b-2 border-zinc-800 pb-3">
                                         <div className="flex items-start justify-between">
-                                            <div className="space-y-1">
-                                                <div className="flex items-center space-x-2 space-y-2 flex-wrap">
-                                                    <h3 className="font-black text-lime-400">{le.exercise?.name}</h3>
+                                            <div className="min-w-0 space-y-1">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <h3 className="font-display text-2xl leading-none text-zinc-100">{le.exercise?.name}</h3>
                                                     {/* PR Badge if available */}
                                                     {personalRecords[le.exerciseId] && (
-                                                        <span className="inline-flex items-center space-x-1 rounded bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-[10px] font-extrabold text-amber-300">
+                                                        <span className="inline-flex items-center space-x-1 rounded border-2 border-amber-500 bg-zinc-900 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-amber-400">
                                                             <Trophy className="h-3 w-3 text-amber-400 shrink-0" />
                                                             <span>
                                                                 PR:{" "}
@@ -377,12 +370,12 @@ export default function Workout() {
                                                     )}
                                                 </div>
                                                 <div className="flex items-center space-x-2 mt-0.5">
-                                                    <span className="pr-2 py-0.5 text-xs font-bold text-zinc-400">
+                                                    <span className="pr-2 py-0.5 text-sm font-semibold text-zinc-500">
                                                         {le.exercise?.category}
                                                     </span>
                                                     {le.rest_time_seconds && (
-                                                        <span className="text-xs text-zinc-400">
-                                                            ⏱️ Rest: {le.rest_time_seconds}s
+                                                        <span className="font-mono text-xs text-zinc-500">
+                                                            Rest {le.rest_time_seconds}s
                                                         </span>
                                                     )}
                                                 </div>
@@ -400,9 +393,9 @@ export default function Workout() {
                                                         }
                                                     }}
                                                     title="View or edit exercise notes"
-                                                    className={`items-center space-x-1 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold transition-all active:scale-95 sm:flex hidden ${
+                                                    className={`items-center space-x-1 rounded-lg border-2 px-2.5 py-2 text-xs font-bold transition-all active:scale-95 sm:flex hidden ${
                                                         le.exercise?.notes
-                                                            ? "bg-lime-500/10 border-lime-500/30 text-lime-400"
+                                                            ? "bg-zinc-900 border-lime-400 text-lime-400"
                                                             : "bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-lime-400"
                                                     }`}
                                                 >
@@ -417,7 +410,7 @@ export default function Workout() {
                                                         setShowAddExPicker(true);
                                                     }}
                                                     title="Substitute or swap this exercise"
-                                                    className="items-center space-x-1 rounded-lg bg-zinc-900 border border-zinc-800 px-2.5 py-1.5 text-[10px] font-bold text-zinc-300 hover:text-lime-400 hover:border-lime-500/30 active:scale-95 transition-all sm:flex hidden"
+                                                    className="items-center space-x-1 rounded-lg bg-zinc-900 border-2 border-zinc-800 px-2.5 py-2 text-xs font-bold text-zinc-300 hover:text-lime-400 active:scale-95 transition-all sm:flex hidden"
                                                 >
                                                     <RefreshCw className="h-3.5 w-3.5 text-lime-400" />
                                                     <span>Substitute</span>
@@ -425,7 +418,8 @@ export default function Workout() {
 
                                                 <button
                                                     onClick={() => removeExerciseFromWorkout(exIdx)}
-                                                    className="rounded-lg p-1.5 text-zinc-600 hover:bg-zinc-800 hover:text-red-400 transition-colors"
+                                                    aria-label={`Remove ${le.exercise?.name ?? "exercise"}`}
+                                                    className="grid h-10 w-10 place-items-center rounded-lg text-zinc-500 hover:bg-zinc-850 hover:text-red-400 active:scale-90 transition-transform"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </button>
@@ -444,9 +438,9 @@ export default function Workout() {
                                                     }
                                                 }}
                                                 title="View or edit exercise notes"
-                                                className={`items-center space-x-1 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold transition-all active:scale-95 flex ${
+                                                className={`items-center space-x-1 rounded-lg border-2 px-2.5 py-2 text-xs font-bold transition-all active:scale-95 flex ${
                                                     le.exercise?.notes
-                                                        ? "bg-lime-500/10 border-lime-500/30 text-lime-400"
+                                                        ? "bg-zinc-900 border-lime-400 text-lime-400"
                                                         : "bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-lime-400"
                                                 }`}
                                             >
@@ -461,7 +455,7 @@ export default function Workout() {
                                                     setShowAddExPicker(true);
                                                 }}
                                                 title="Substitute or swap this exercise"
-                                                className="items-center space-x-1 rounded-lg bg-zinc-900 border border-zinc-800 px-2.5 py-1.5 text-[10px] font-bold text-zinc-300 hover:text-lime-400 hover:border-lime-500/30 active:scale-95 transition-all flex"
+                                                className="items-center space-x-1 rounded-lg bg-zinc-900 border-2 border-zinc-800 px-2.5 py-2 text-xs font-bold text-zinc-300 hover:text-lime-400 active:scale-95 transition-all flex"
                                             >
                                                 <RefreshCw className="h-3.5 w-3.5 text-lime-400" />
                                                 <span>Substitute</span>
@@ -470,7 +464,7 @@ export default function Workout() {
 
                                         {/* Exercise Notes Box / Editor */}
                                         {(openNotesExId === le.exerciseId || le.exercise?.notes) && (
-                                            <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/70 p-3 space-y-2 text-xs">
+                                            <div className="rounded-xl border-2 border-zinc-800 bg-zinc-950 p-3 space-y-2 text-sm">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center space-x-1.5 font-bold text-lime-400">
                                                         <FileText className="h-3.5 w-3.5" />
@@ -514,7 +508,7 @@ export default function Workout() {
                                                                     );
                                                                     setOpenNotesExId(null);
                                                                 }}
-                                                                className="px-3 py-1 text-xs font-bold bg-lime-400 text-black rounded-md hover:bg-lime-300"
+                                                                className="btn-stamp px-3 py-1.5 text-xs font-bold bg-lime-400 text-white rounded-md"
                                                             >
                                                                 Save Note
                                                             </button>
@@ -541,7 +535,7 @@ export default function Workout() {
                                                             onClick={() =>
                                                                 swapExerciseInWorkout(exIdx, le.originalExerciseId!)
                                                             }
-                                                            className="flex items-center space-x-1 rounded-md bg-zinc-800 border border-zinc-700 px-2 py-1 text-[10px] font-bold text-zinc-300 hover:bg-zinc-700 active:scale-95 transition-all"
+                                                            className="flex items-center space-x-1 rounded-md bg-zinc-850 border-2 border-zinc-800 px-2 py-1.5 text-xs font-bold text-zinc-100 active:scale-95 transition-transform"
                                                         >
                                                             <span>↩ Back to {le.originalExercise?.name}</span>
                                                         </button>
@@ -560,7 +554,7 @@ export default function Workout() {
                                                             <button
                                                                 key={subEx.id}
                                                                 onClick={() => swapExerciseInWorkout(exIdx, subEx.id)}
-                                                                className="flex items-center space-x-1 rounded-md bg-lime-500/10 border border-lime-500/20 px-2 py-1 text-[10px] font-bold text-lime-400 hover:bg-lime-500/20 active:scale-95 transition-all"
+                                                                className="flex items-center space-x-1 rounded-md bg-zinc-900 border-2 border-lime-400 px-2 py-1.5 text-xs font-bold text-lime-400 active:scale-95 transition-transform"
                                                             >
                                                                 <RefreshCw className="h-3 w-3" />
                                                                 <span>Swap to {subEx.name}</span>
@@ -574,13 +568,13 @@ export default function Workout() {
 
                                     {/* Sets Table */}
                                     <div className="space-y-2">
-                                        <div className="grid grid-cols-12 gap-2 text-center text-xs font-bold text-zinc-500 uppercase tracking-wider pl-1">
+                                        <div className="grid grid-cols-12 gap-2 text-center font-mono text-[11px] font-semibold text-zinc-500 uppercase tracking-wider pl-1">
                                             <span className="col-span-2 text-left">Set</span>
                                             <span className="col-span-3">
                                                 Weight ({activeWeightUnit.toUpperCase()})
                                             </span>
                                             <span className="col-span-3">Reps</span>
-                                            <span className="col-span-2">Warmup</span>
+                                            <span className="col-span-2">Warm</span>
                                             <span className="col-span-2 text-right">Done</span>
                                         </div>
 
@@ -595,11 +589,11 @@ export default function Workout() {
                                                 <div
                                                     key={set.id}
                                                     className={`grid grid-cols-12 gap-2 items-center text-center p-1 rounded-lg transition-colors ${
-                                                        set.completed ? "bg-lime-500/5 border border-lime-500/10" : ""
+                                                        set.completed ? "bg-zinc-850" : ""
                                                     }`}
                                                 >
                                                     {/* Set index */}
-                                                    <span className="col-span-2 text-left text-xs font-bold text-zinc-400">
+                                                    <span className="col-span-2 text-left pl-1 font-display text-lg text-zinc-100">
                                                         {setIdx + 1}
                                                     </span>
 
@@ -622,7 +616,8 @@ export default function Workout() {
                                                                 });
                                                             }}
                                                             disabled={set.completed}
-                                                            className="w-full rounded-lg bg-zinc-950 border border-zinc-800 py-1 text-center text-xs text-zinc-100 focus:border-lime-500/50 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            aria-label={`Set ${setIdx + 1} weight`}
+                                                            className="w-full rounded-lg bg-zinc-900 border border-zinc-800 py-2 text-center font-mono text-sm font-semibold text-zinc-100 focus:outline-none disabled:border-zinc-800/30 disabled:bg-transparent disabled:text-zinc-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                         />
                                                     </div>
 
@@ -638,7 +633,8 @@ export default function Workout() {
                                                                 })
                                                             }
                                                             disabled={set.completed}
-                                                            className="w-full rounded-lg bg-zinc-950 border border-zinc-800 py-1 text-center text-xs text-zinc-100 focus:border-lime-500/50 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            aria-label={`Set ${setIdx + 1} reps`}
+                                                            className="w-full rounded-lg bg-zinc-900 border border-zinc-800 py-2 text-center font-mono text-sm font-semibold text-zinc-100 focus:outline-none disabled:border-zinc-800/30 disabled:bg-transparent disabled:text-zinc-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                         />
                                                     </div>
 
@@ -653,7 +649,8 @@ export default function Workout() {
                                                                     is_warmup: e.target.checked,
                                                                 })
                                                             }
-                                                            className="h-4 w-4 rounded border border-zinc-700 bg-zinc-950 text-lime-400 focus:ring-2 focus:ring-lime-500/20 focus:ring-offset-0 focus:ring-offset-zinc-950 cursor-pointer accent-lime-500"
+                                                            aria-label={`Set ${setIdx + 1} is a warm-up`}
+                                                            className="h-5 w-5 cursor-pointer"
                                                         />
                                                     </div>
 
@@ -661,10 +658,11 @@ export default function Workout() {
                                                     <div className="col-span-2 flex justify-end">
                                                         <button
                                                             onClick={() => toggleSetCompleted(exIdx, setIdx)}
-                                                            className={`flex h-6 w-6 items-center justify-center rounded-lg border transition-all ${
-                                                                set.completed
-                                                                    ? "bg-lime-400 border-lime-400 text-black shadow shadow-lime-500/30"
-                                                                    : "border-zinc-800 hover:border-zinc-600 text-transparent bg-zinc-950"
+                                                            aria-label={`Set ${setIdx + 1} done`}
+                                                            aria-pressed={set.completed}
+                                                            data-done={set.completed}
+                                                            className={`plate-check flex h-10 w-10 items-center justify-center ${
+                                                                set.completed ? "" : "text-transparent"
                                                             }`}
                                                         >
                                                             <Check className="h-4 w-4 stroke-3" />
@@ -679,7 +677,7 @@ export default function Workout() {
                                     <div className="flex space-x-2 pt-2">
                                         <button
                                             onClick={() => addSetToExercise(exIdx)}
-                                            className="flex-1 flex items-center justify-center space-x-1 rounded-lg border border-zinc-800 py-2 text-xs text-zinc-300 hover:bg-zinc-800 active:scale-95 transition-all"
+                                            className="flex-1 flex min-h-11 items-center justify-center space-x-1 rounded-lg border-2 border-zinc-800 bg-zinc-900 text-sm font-bold text-zinc-100 active:scale-95 transition-transform"
                                         >
                                             <Plus className="h-3.5 w-3.5" />
                                             <span>Add Set</span>
@@ -687,7 +685,7 @@ export default function Workout() {
                                         <button
                                             onClick={() => removeSetFromExercise(exIdx, le.sets.length - 1)}
                                             disabled={le.sets.length <= 1}
-                                            className="flex-1 flex items-center justify-center space-x-1 rounded-lg border border-zinc-800 py-2 text-xs text-zinc-500 hover:text-red-400 disabled:opacity-30 disabled:hover:text-zinc-500 transition-colors"
+                                            className="flex-1 flex min-h-11 items-center justify-center space-x-1 rounded-lg border-2 border-zinc-800/30 text-sm font-semibold text-zinc-500 hover:text-red-400 active:scale-95 disabled:opacity-40 disabled:hover:text-zinc-500 transition-transform"
                                         >
                                             <Trash2 className="h-3.5 w-3.5" />
                                             <span>Remove Set</span>
@@ -705,7 +703,7 @@ export default function Workout() {
                         setSubstitutePickerExIndex(null);
                         setShowAddExPicker(true);
                     }}
-                    className="w-full flex items-center justify-center space-x-2 rounded-2xl border border-dashed border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/10 py-4 text-sm font-bold text-zinc-300 active:scale-[0.99] transition-all"
+                    className="w-full flex items-center justify-center space-x-2 rounded-2xl border-[2.5px] border-dashed border-zinc-800 bg-zinc-900 py-4 font-bold text-zinc-100 active:scale-[0.99] transition-transform"
                 >
                     <Plus className="h-4.5 w-4.5 text-lime-400" />
                     <span>Add Exercise</span>
@@ -714,15 +712,15 @@ export default function Workout() {
 
             {/* FINISH WORKOUT DIALOG MODEL */}
             {showFinishModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-                    <div className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl space-y-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fade-in">
+                    <div className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-950 p-6 space-y-4 slab">
                         <div className="flex items-center space-x-2">
                             <MessageSquare className="h-5 w-5 text-lime-400" />
-                            <h3 className="text-lg font-bold text-zinc-100">Finish Workout</h3>
+                            <h2 className="text-3xl text-zinc-100">Finish workout</h2>
                         </div>
 
                         <p className="text-sm text-zinc-400">
-                            Outstanding work! Enter any logs, notes, or details about how your workout felt today.
+                            Good work. Add a note about how it went, or log it as is.
                         </p>
 
                         <textarea
@@ -736,13 +734,13 @@ export default function Workout() {
                         <div className="grid grid-cols-2 gap-3 pt-2">
                             <button
                                 onClick={() => setShowFinishModal(false)}
-                                className="rounded-xl border border-zinc-800 bg-zinc-900/30 py-3 text-xs font-bold text-zinc-400"
+                                className="rounded-xl border-2 border-zinc-800 bg-zinc-900 py-3 text-sm font-bold text-zinc-100 active:scale-95 transition-transform"
                             >
                                 Go Back
                             </button>
                             <button
                                 onClick={handleFinishSubmit}
-                                className="rounded-xl bg-lime-400 py-3 text-xs font-extrabold text-black hover:bg-lime-300 shadow shadow-lime-500/10"
+                                className="rounded-xl bg-lime-400 py-3 text-sm font-bold text-white hover:bg-lime-300 btn-stamp"
                             >
                                 Log Workout
                             </button>
@@ -755,9 +753,9 @@ export default function Workout() {
             {showAddExPicker && (
                 <div className="fixed inset-0 z-65 flex flex-col bg-zinc-950 p-4 animate-slide-up">
                     {/* Header */}
-                    <div className="flex items-center justify-between pb-3 border-b border-zinc-900">
+                    <div className="flex items-center justify-between pb-3 border-b border-zinc-800/15">
                         <div>
-                            <h3 className="text-lg font-bold text-zinc-100">
+                            <h3 className="font-display text-2xl text-zinc-100">
                                 {substitutePickerExIndex !== null ? "Substitute Exercise" : "Add Exercise"}
                             </h3>
                             {substitutePickerExIndex !== null && (
@@ -774,7 +772,7 @@ export default function Workout() {
                                 setShowAddExPicker(false);
                                 setSubstitutePickerExIndex(null);
                             }}
-                            className="rounded-lg bg-zinc-950 p-1 text-zinc-400 hover:text-zinc-200"
+                            aria-label="Close" className="grid h-10 w-10 place-items-center rounded-lg border-2 border-zinc-800 bg-zinc-900 text-zinc-100 active:scale-90 transition-transform"
                         >
                             <X className="h-5 w-5" />
                         </button>
@@ -798,10 +796,10 @@ export default function Workout() {
                             <button
                                 key={cat}
                                 onClick={() => setSelectedCategory(cat)}
-                                className={`rounded-lg px-3 py-1.5 text-xs font-bold whitespace-nowrap transition-colors ${
+                                className={`rounded-lg border-2 px-3 py-1.5 text-sm font-bold whitespace-nowrap transition-colors ${
                                     selectedCategory === cat
-                                        ? "bg-lime-400 text-black"
-                                        : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200"
+                                        ? "bg-lime-400 border-zinc-800 text-white"
+                                        : "bg-zinc-900 border-zinc-800/25 text-zinc-400 hover:text-zinc-100"
                                 }`}
                             >
                                 {cat}
@@ -818,10 +816,10 @@ export default function Workout() {
                                 <div
                                     key={ex.id}
                                     onClick={() => handleSelectExerciseFromPicker(ex.id)}
-                                    className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/20 p-3.5 hover:bg-zinc-900/40 cursor-pointer transition-colors"
+                                    className="flex items-center justify-between rounded-xl p-3.5 cursor-pointer slab slab-press"
                                 >
                                     <div>
-                                        <h4 className="text-sm font-bold text-zinc-200">{ex.name}</h4>
+                                        <h4 className="font-bold text-zinc-100">{ex.name}</h4>
                                         <p className="text-sm text-zinc-500 font-semibold">{ex.category}</p>
                                     </div>
                                     <div className="rounded-lg bg-zinc-850 p-1.5 text-zinc-500 hover:text-lime-400 flex items-center space-x-1">

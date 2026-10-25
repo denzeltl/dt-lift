@@ -1,49 +1,63 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Stardos_Stencil, IBM_Plex_Sans_Condensed, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { DatabaseProvider } from "@/context/DatabaseContext";
 import { WorkoutProvider } from "@/context/WorkoutContext";
 import BottomNav from "@/components/BottomNav";
 import PWARegister from "@/components/PWARegister";
 
-const geistSans = Geist({
-    variable: "--font-geist-sans",
+const stencil = Stardos_Stencil({
+    variable: "--font-stencil",
+    weight: ["400", "700"],
     subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-    variable: "--font-geist-mono",
+const body = IBM_Plex_Sans_Condensed({
+    variable: "--font-body",
+    weight: ["400", "500", "600", "700"],
+    style: ["normal", "italic"],
+    subsets: ["latin"],
+});
+
+const plexMono = IBM_Plex_Mono({
+    variable: "--font-plex-mono",
+    weight: ["500", "600"],
     subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
+    metadataBase: new URL("https://dt-lift.vercel.app"),
     title: "DT Lift - Gym Workout Tracker",
-    description:
-        "DT Lift is a mobile-first gym tracker progressive web application for tracking workouts, templates, and weights.",
+    description: "Log every set, run your workout templates and track your training volume. Works offline.",
+    applicationName: "DT Lift",
     manifest: "/manifest.webmanifest",
     icons: {
         icon: [
-            { url: "/favicon.ico", sizes: "any" },
-            { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
-            { url: "/icon-512.png", type: "image/png", sizes: "512x512" },
+            { url: "/favicon.ico", sizes: "48x48" },
+            { url: "/favicon.svg", type: "image/svg+xml" },
         ],
-        apple: [
-            { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-        ],
+        apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
     },
+    openGraph: {
+        title: "DT Lift - Gym Workout Tracker",
+        description: "Log every set, run your workout templates and track your training volume. Works offline.",
+        siteName: "DT Lift",
+        type: "website",
+    },
+    twitter: { card: "summary_large_image" },
     appleWebApp: {
         capable: true,
         title: "DT Lift",
-        statusBarStyle: "black-translucent",
+        statusBarStyle: "default",
     },
 };
 
 export const viewport: Viewport = {
-    themeColor: "#09090b",
+    themeColor: "#F4EFE6",
+    colorScheme: "light",
     width: "device-width",
     initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
+    viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -52,11 +66,11 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}>
-            <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-100 pb-24">
+        <html lang="en" className={`${stencil.variable} ${body.variable} ${plexMono.variable} h-full antialiased`}>
+            <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-100 pb-28">
                 <DatabaseProvider>
                     <WorkoutProvider>
-                        <main className="flex-1 w-full max-w-lg mx-auto px-4 pt-4">{children}</main>
+                        <main className="flex-1 w-full max-w-lg mx-auto px-4 pt-5">{children}</main>
                         <BottomNav />
                         <PWARegister />
                     </WorkoutProvider>

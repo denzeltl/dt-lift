@@ -1,28 +1,19 @@
 {
     "name": "DT Lift - Gym Workout Tracker",
     "short_name": "DT Lift",
-    "description": "Progressive web app for tracking gym workouts, templates, programs, and weights.",
+    "description": "Log every set, run your workout templates and track your volume. Works offline.",
+    "id": "/",
     "start_url": "/",
+    "scope": "/",
     "display": "standalone",
-    "background_color": "#09090b",
-    "theme_color": "#a3e635",
+    "background_color": "#F4EFE6",
+    "theme_color": "#F4EFE6",
     "orientation": "portrait-primary",
+    "categories": ["health", "fitness", "sports"],
     "icons": [
-        {
-            "src": "/icon-192.png",
-            "type": "image/png",
-            "sizes": "192x192"
-        },
-        {
-            "src": "/icon-512.png",
-            "type": "image/png",
-            "sizes": "512x512"
-        },
-        {
-            "src": "/icon-512.png",
-            "type": "image/png",
-            "sizes": "512x512",
-            "purpose": "any maskable"
-        }
+        { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any" },
+        { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
+        { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" },
+        { "src": "/icon-maskable-512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
     ]
 }
